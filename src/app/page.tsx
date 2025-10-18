@@ -24,16 +24,6 @@ export default function Home() {
     
     if (storedUser) {
       setUser(storedUser);
-    } else {
-      // If no user, create a default one to bypass WelcomeGate
-      const defaultUser = { name: 'Guest', email: 'guest@example.com' };
-      try {
-        localStorage.setItem('rafa_project_user', JSON.stringify(defaultUser));
-        setUser(defaultUser);
-      } catch (error) {
-        console.error("Could not set default user to localStorage", error);
-        setUser(defaultUser); // still set user for current session
-      }
     }
 
     setLoading(false);
@@ -43,19 +33,23 @@ export default function Home() {
     const userData = { name, email };
     try {
       localStorage.setItem('rafa_project_user', JSON.stringify(userData));
-      setUser(userData);
     } catch (error) {
         console.error("Could not set user to localStorage", error);
     }
+    setUser(userData);
   };
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center text-primary-foreground gap-4">
         <Icons.loader className="h-12 w-12 animate-spin text-primary" />
         <p className="font-headline text-lg tracking-wider">Loading Project...</p>
       </div>
     );
+  }
+
+  if (!user) {
+    return <WelcomeGate onLogin={handleLogin} />;
   }
 
   return <MainContent user={user} />;
