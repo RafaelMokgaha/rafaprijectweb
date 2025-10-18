@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from './ui/button';
+import Link from 'next/link';
 
 export function MainContent() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
@@ -88,6 +89,9 @@ export function MainContent() {
         {user && (
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary-foreground">Welcome, {user.displayName || user.email}</span>
+            <Button variant="outline" size="sm" asChild>
+                <Link href="/admin">Admin</Link>
+            </Button>
             <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
           </div>
         )}
