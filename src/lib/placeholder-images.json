@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "logo",
+      "description": "RAFA Project Logo",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_3c89fa9c60254e37b812bb5ad4b05f7a~mv2.png",
+      "imageHint": "futuristic logo"
+    },
+    {
+      "id": "background",
+      "description": "Futuristic city skyline background",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_72c3623181a94851b929a165a68be309~mv2.png",
+      "imageHint": "city night"
+    },
+    {
+      "id": "gta_v_enhanced",
+      "description": "Grand Theft Auto V Enhanced Edition Cover Art",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_f246ef32468f4915b6289103c6a855e7~mv2.jpg",
+      "imageHint": "action game"
+    },
+    {
+      "id": "rdr2",
+      "description": "Red Dead Redemption 2 Cover Art",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_69d7bff490d840a984c6569f4e6623ab~mv2.jpg",
+      "imageHint": "western game"
+    },
+    {
+      "id": "cyberpunk_2077",
+      "description": "Cyberpunk 2077 Cover Art",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_635bfab9aee142d0975e48f858af1926~mv2.png",
+      "imageHint": "sci-fi future"
+    },
+    {
+      "id": "euro_truck_2",
+      "description": "Euro Truck Simulator 2 Cover Art",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_cc9474293e184d37bc45fab02eee688c~mv2.jpg",
+      "imageHint": "truck simulator"
+    },
+    {
+      "id": "beamng_drive",
+      "description": "BeamNG.drive Cover Art",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_d07ce5aaf34643c98b13f6b8fe41c587~mv2.jpg",
+      "imageHint": "car crash"
+    },
+    {
+      "id": "fifa_24",
+      "description": "FIFA 24 Cover Art",
+      "imageUrl": "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzb2NjZXIlMjBnYW1lfGVufDB8fHx8MTc2MDczODc4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer game"
+    },
+    {
+      "id": "fortnite",
+      "description": "Fortnite Cover Art",
+      "imageUrl": "https://images.unsplash.com/photo-1683140275090-996c8f9b4587?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxiYXR0bGUlMjByb3lhbGV8ZW58MHx8fHwxNzYwNzY1MDQyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "battle royale"
+    },
+    {
+      "id": "fc_26_announcement",
+      "description": "FC 26 Is Now Available Announcement Image",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_6e20907f3d6640d8bcb5320b54972418~mv2.png",
+      "imageHint": "soccer player"
+    }
+  ]
 }
