@@ -29,11 +29,7 @@ export function GameCard({ game, onRequestClick }: GameCardProps) {
       </div>
       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
         <h3 className="font-headline text-xl font-bold truncate">{game.title}</h3>
-        <div className="flex flex-wrap gap-1 mt-2">
-            {game.platforms.map(platform => (
-                <Badge key={platform} variant="secondary" className="bg-accent/50 text-accent-foreground/80 text-xs">{platform}</Badge>
-            ))}
-        </div>
+        
         <Button 
           size="sm"
           onClick={onRequestClick}
