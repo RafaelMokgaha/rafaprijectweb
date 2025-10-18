@@ -9,7 +9,7 @@ export function HeroSection({ onRequestClick, onAvailableClick }: HeroSectionPro
   return (
     <section className="text-center py-20 md:py-32">
       <h1 className="font-headline text-5xl md:text-7xl font-bold uppercase text-shadow-glow">
-        <span role="img" aria-label="lightning bolt">⚡</span> Welcome to RAFA Project <span role="img" aria-label="lightning bolt">⚡</span>
+        Welcome to RAFA Project
       </h1>
       <p className="mt-4 text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto">
         What fix or game request do you need?
