@@ -1,55 +1,35 @@
 {
   "entities": {
-    "UserProfile": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User Profile",
-      "type": "object",
-      "description": "Represents a user's profile information.",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The user's display name."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address.",
-          "format": "email"
-        },
-        "profileComplete": {
-            "type": "boolean",
-            "description": "Whether the user has completed their profile."
-        }
-      },
-      "required": [
-        "email",
-        "profileComplete"
-      ]
-    },
     "GameRequest": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "GameRequest",
       "type": "object",
-      "description": "Represents a user's request for a game to be added to the RAFA Project Launcher.",
+      "description": "Represents a user's request for a game on the RAFA Project platform.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the game request."
-        },
-        "userAccountId": {
-          "type": "string",
-          "description": "Reference to UserAccount. (Relationship: UserAccount 1:N GameRequest)"
+          "description": "Unique identifier for the Game Request."
         },
         "gameName": {
           "type": "string",
-          "description": "The name of the game being requested."
+          "description": "The name of the game requested by the user."
         },
         "platform": {
           "type": "string",
-          "description": "The platform for which the game is being requested (e.g., PC, PS4/5, Xbox, Switch)."
+          "description": "The platform for which the game is requested (e.g., PC, PS4/5, Xbox, Switch)."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the user submitting the request."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user submitting the request.",
+          "format": "email"
         },
         "notes": {
           "type": "string",
-          "description": "Any additional notes or comments from the user regarding the game request."
+          "description": "Additional notes or comments provided by the user with the request."
         },
         "requestDate": {
           "type": "string",
@@ -59,9 +39,10 @@
       },
       "required": [
         "id",
-        "userAccountId",
         "gameName",
         "platform",
+        "name",
+        "email",
         "requestDate"
       ]
     },
@@ -69,7 +50,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AvailableGame",
       "type": "object",
-      "description": "Represents a game that is available on the RAFA Project Launcher.",
+      "description": "Represents a game available on the RAFA Project platform.",
       "properties": {
         "id": {
           "type": "string",
@@ -88,8 +69,7 @@
         },
         "imageUrl": {
           "type": "string",
-          "description": "URL of the image for the available game.",
-          "format": "uri"
+          "description": "URL of the image representing the game."
         }
       },
       "required": [
@@ -98,11 +78,44 @@
         "supportedPlatforms",
         "imageUrl"
       ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the RAFA Project platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "The date and time when the user registered.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "registrationDate"
+      ]
     }
   },
   "auth": {
     "providers": [
-      "password"
+      "password",
+      "anonymous"
     ]
   },
   "firestore": {
@@ -110,35 +123,31 @@
       {
         "path": "/users/{userId}",
         "definition": {
-          "entityName": "UserProfile",
+          "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/UserProfile"
+            "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile information. The `userId` is the Firebase Authentication UID. Represents profile information such as name, email, and profile completion status.",
+          "description": "Stores user profiles. Uses path-based ownership for private user data. User id is the firebase auth uid",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user account, matching the Firebase Authentication UID."
+              "description": "The unique identifier of the user, corresponding to their Firebase Auth UID."
             }
           ]
         }
       },
       {
-        "path": "/users/{userId}/game_requests/{gameRequestId}",
+        "path": "/game_requests/{gameRequestId}",
         "definition": {
           "entityName": "GameRequest",
           "schema": {
             "$ref": "#/backend/entities/GameRequest"
           },
-          "description": "Stores game requests submitted by users. Includes the denormalized 'userId' field for authorization independence.",
+          "description": "Stores user game requests. Each document represents a single request.",
           "params": [
             {
-              "name": "userId",
-              "description": "The unique identifier for the user account that submitted the request."
-            },
-            {
               "name": "gameRequestId",
-              "description": "The unique identifier for the game request."
+              "description": "The unique identifier of the game request."
             }
           ]
         }
@@ -150,15 +159,16 @@
           "schema": {
             "$ref": "#/backend/entities/AvailableGame"
           },
-          "description": "Stores information about available games on the RAFA Project Launcher.",
+          "description": "Stores information about available games on the platform. Each document represents a single available game.",
           "params": [
             {
               "name": "availableGameId",
-              "description": "The unique identifier for the available game."
+              "description": "The unique identifier of the available game."
             }
           ]
         }
       }
-    ]
+    ],
+    "reasoning": "The Firestore structure is designed to store game requests, available games, and user data for the RAFA Project Launcher. It prioritizes simplicity and security. User data is stored in a private collection using path-based ownership. Game requests are stored in a flat collection. Available games are stored in a separate flat collection.\n\nAuthorization Independence:\nThere is no need to denormalize any data.\n\nQAPs:\nList operations are secured by structural segregation."
   }
 }
