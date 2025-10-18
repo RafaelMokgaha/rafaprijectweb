@@ -142,9 +142,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="PC">PC</SelectItem>
-                      <SelectItem value="PS4/5">PS4/5</SelectItem>
-                      <SelectItem value="Xbox">Xbox</SelectItem>
-                      <SelectItem value="Switch">Switch</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage>{state.errors?.platform}</FormMessage>
