@@ -1,15 +1,11 @@
 {
   "entities": {
-    "UserAccount": {
+    "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserAccount",
+      "title": "User Profile",
       "type": "object",
-      "description": "Represents a user account for the RAFA Project Launcher.",
+      "description": "Represents a user's profile information.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user account."
-        },
         "name": {
           "type": "string",
           "description": "The user's display name."
@@ -19,17 +15,14 @@
           "description": "The user's email address.",
           "format": "email"
         },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the user account was created.",
-          "format": "date-time"
+        "profileComplete": {
+            "type": "boolean",
+            "description": "Whether the user has completed their profile."
         }
       },
       "required": [
-        "id",
-        "name",
         "email",
-        "createdAt"
+        "profileComplete"
       ]
     },
     "GameRequest": {
@@ -109,39 +102,38 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
     "structure": [
       {
-        "path": "/user_accounts/{userAccountId}",
+        "path": "/users/{userId}",
         "definition": {
-          "entityName": "UserAccount",
+          "entityName": "UserProfile",
           "schema": {
-            "$ref": "#/backend/entities/UserAccount"
+            "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user account information. The `userAccountId` is the Firebase Authentication UID. Represents profile information such as name, email, and creation date.",
+          "description": "Stores user profile information. The `userId` is the Firebase Authentication UID. Represents profile information such as name, email, and profile completion status.",
           "params": [
             {
-              "name": "userAccountId",
+              "name": "userId",
               "description": "The unique identifier for the user account, matching the Firebase Authentication UID."
             }
           ]
         }
       },
       {
-        "path": "/users/{userAccountId}/game_requests/{gameRequestId}",
+        "path": "/users/{userId}/game_requests/{gameRequestId}",
         "definition": {
           "entityName": "GameRequest",
           "schema": {
             "$ref": "#/backend/entities/GameRequest"
           },
-          "description": "Stores game requests submitted by users. Includes the denormalized 'userAccountId' field for authorization independence.",
+          "description": "Stores game requests submitted by users. Includes the denormalized 'userId' field for authorization independence.",
           "params": [
             {
-              "name": "userAccountId",
+              "name": "userId",
               "description": "The unique identifier for the user account that submitted the request."
             },
             {
@@ -167,7 +159,6 @@
           ]
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to support the RAFA Project Launcher application, focusing on user accounts, game requests, and available games. It leverages path-based ownership for user-specific data (game requests) and a dedicated collection for globally available games. User accounts are stored in a top-level collection for easy authentication and management. To ensure authorization independence, the `GameRequest` documents under `/users/{userAccountId}/game_requests/{gameRequestId}` include the `userAccountId` field, enabling secure rules without needing to perform `get()` operations on parent documents. This structure facilitates QAPs by segregating user-specific data and global data into separate collections with distinct security profiles."
+    ]
   }
 }

@@ -7,12 +7,14 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowRight, UserPlus, LogIn } from 'lucide-react';
-import { useAuth } from '@/firebase';
+import { UserPlus, LogIn } from 'lucide-react';
+import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const signUpSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
@@ -29,10 +31,11 @@ export function WelcomeGate() {
   const [isSigningUp, setIsSigningUp] = useState(true);
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
   const auth = useAuth();
+  const firestore = useFirestore();
 
   const signUpForm = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { email: "", password: "" },
   });
 
   const signInForm = useForm<SignInFormValues>({
@@ -43,8 +46,24 @@ export function WelcomeGate() {
   async function onSignUp(data: SignUpFormValues) {
     setFirebaseError(null);
     try {
-      await createUserWithEmailAndPassword(auth, data.email, data.password);
-      // User will be automatically signed in and the main app will render via the onAuthStateChanged listener
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const user = userCredential.user;
+      
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDocData = {
+          email: user.email,
+          name: '',
+          profileComplete: false,
+      };
+
+      setDoc(userDocRef, userDocData, { merge: true }).catch(error => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: userDocRef.path,
+          operation: 'create',
+          requestResourceData: userDocData
+        }));
+      });
+
     } catch (error: any) {
       setFirebaseError(error.message);
     }
@@ -54,7 +73,6 @@ export function WelcomeGate() {
     setFirebaseError(null);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-       // User will be automatically signed in and the main app will render via the onAuthStateChanged listener
     } catch (error: any) {
       setFirebaseError(error.message);
     }
@@ -62,8 +80,6 @@ export function WelcomeGate() {
   
   const form = isSigningUp ? signUpForm : signInForm;
   const onSubmit = isSigningUp ? onSignUp : onSignIn;
-  type FormValues = typeof isSigningUp extends true ? SignUpFormValues : SignInFormValues;
-
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -82,25 +98,6 @@ export function WelcomeGate() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
-              {isSigningUp && (
-                <FormField
-                  control={signUpForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-primary-foreground/80">Your Name</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter your full name" 
-                          {...field} 
-                          className="bg-input/50 border-primary/50 focus:ring-primary/80"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
               <FormField
                 control={form.control}
                 name="email"
@@ -139,7 +136,7 @@ export function WelcomeGate() {
               />
               <Button 
                 type="submit" 
-                className="w-full font-bold tracking-wider uppercase bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/50 hover:scale-105"
+                className="w-full font-bold tracking-wider uppercase bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/50 hover:scale-105"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting 

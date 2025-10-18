@@ -11,6 +11,7 @@ import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
 import type { User as FirebaseUser } from 'firebase/auth';
+import type { User } from '@/lib/types';
 
 export function MainContent({ user }: { user: FirebaseUser }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -26,7 +27,8 @@ export function MainContent({ user }: { user: FirebaseUser }) {
     setIsDialogOpen(true);
   };
 
-  const appUser = {
+  const appUser: User = {
+      uid: user.uid,
       name: user.displayName || 'Anonymous',
       email: user.email || 'no-email@example.com'
   }
