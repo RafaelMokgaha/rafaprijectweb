@@ -10,6 +10,10 @@
           "type": "string",
           "description": "Unique identifier for the Game Request."
         },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who made the request."
+        },
         "gameName": {
           "type": "string",
           "description": "The name of the game requested by the user."
@@ -35,15 +39,21 @@
           "type": "string",
           "description": "The date and time when the game request was submitted.",
           "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the request (e.g., pending, approved, denied)."
         }
       },
       "required": [
         "id",
+        "userId",
         "gameName",
         "platform",
         "name",
         "email",
-        "requestDate"
+        "requestDate",
+        "status"
       ]
     },
     "AvailableGame": {
@@ -110,6 +120,46 @@
         "email",
         "registrationDate"
       ]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a message sent from an admin to a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the message."
+        },
+        "receiverId": {
+          "type": "string",
+          "description": "The UID of the user receiving the message."
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject of the message."
+        },
+        "body": {
+          "type": "string",
+          "description": "The content of the message."
+        },
+        "sentAt": {
+          "type": "string",
+          "description": "The date and time when the message was sent.",
+          "format": "date-time"
+        },
+        "isRead": {
+          "type": "boolean",
+          "description": "Whether the user has read the message."
+        }
+      },
+      "required": [
+        "id",
+        "receiverId",
+        "subject",
+        "body",
+        "sentAt"
+      ]
     }
   },
   "auth": {
@@ -167,8 +217,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores messages sent to a specific user. This is a sub-collection of the users collection.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this message inbox."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique identifier of the message."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to store game requests, available games, and user data for the RAFA Project Launcher. It prioritizes simplicity and security. User data is stored in a private collection using path-based ownership. Game requests are stored in a flat collection. Available games are stored in a separate flat collection.\n\nAuthorization Independence:\nThere is no need to denormalize any data.\n\nQAPs:\nList operations are secured by structural segregation."
+    "reasoning": "The Firestore structure is designed to store game requests, available games, user data and messages for the RAFA Project Launcher. It prioritizes simplicity and security. User data is stored in a private collection using path-based ownership. Messages are stored as a subcollection under each user to enforce privacy. Game requests are stored in a flat collection. Available games are stored in a separate flat collection.\n\nAuthorization Independence:\nThere is no need to denormalize any data.\n\nQAPs:\nList operations are secured by structural segregation."
   }
 }

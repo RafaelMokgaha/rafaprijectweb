@@ -1,12 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { collection } from 'firebase/firestore';
-import { useCollection, useFirestore, useUser } from '@/firebase';
+import { useCollection, useFirestore, useUser, useAuth } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -21,19 +20,33 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
+import { AdminReplyDialog } from '@/components/admin-reply-dialog';
+
+interface GameRequest {
+    id: string;
+    userId: string;
+    gameName: string;
+    name: string;
+    email: string;
+    status: string;
+    requestDate: any;
+    notes: string;
+}
 
 function AdminDashboard() {
   const firestore = useFirestore();
   const { user } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
+  const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<GameRequest | null>(null);
 
   const gameRequestsQuery = useMemo(() => {
     if (!firestore) return null;
     return collection(firestore, 'game_requests');
   }, [firestore]);
 
-  const { data: gameRequests, isLoading, error } = useCollection(gameRequestsQuery);
+  const { data: gameRequests, isLoading, error } = useCollection<GameRequest>(gameRequestsQuery);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -47,8 +60,18 @@ function AdminDashboard() {
     return 'Date not available';
   }
 
+  const handleReplyClick = (request: GameRequest) => {
+    setSelectedRequest(request);
+    setIsReplyDialogOpen(true);
+  }
+
   return (
     <>
+      <AdminReplyDialog
+        isOpen={isReplyDialogOpen}
+        setIsOpen={setIsReplyDialogOpen}
+        request={selectedRequest}
+      />
       <Header>
          {user && (
           <div className="flex items-center gap-4">
@@ -76,6 +99,7 @@ function AdminDashboard() {
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Notes</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -92,11 +116,14 @@ function AdminDashboard() {
                         </TableCell>
                         <TableCell>{formatDate(req.requestDate)}</TableCell>
                         <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
+                        <TableCell>
+                            <Button variant="outline" size="sm" onClick={() => handleReplyClick(req)}>Reply</Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center">
+                      <TableCell colSpan={7} className="text-center">
                         No game requests yet.
                       </TableCell>
                     </TableRow>
