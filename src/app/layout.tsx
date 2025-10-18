@@ -30,6 +30,7 @@ export default function RootLayout({
             data-ai-hint={bgImage.imageHint}
           />
         )}
+        <div className="fixed inset-0 z-[-1] bg-background/70 backdrop-blur-sm" />
         {children}
         <Toaster />
       </body>
