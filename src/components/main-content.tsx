@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import type { User } from '@/lib/types';
 import { Header } from '@/components/header';
 import { HeroSection } from '@/components/hero-section';
 import { AnnouncementSection } from '@/components/announcement-section';
@@ -11,8 +10,9 @@ import { InstructionsSection } from '@/components/instructions-section';
 import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
+import type { User as FirebaseUser } from 'firebase/auth';
 
-export function MainContent({ user }: { user: User }) {
+export function MainContent({ user }: { user: FirebaseUser }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState('');
   const availableGamesRef = useRef<HTMLDivElement>(null);
@@ -26,12 +26,17 @@ export function MainContent({ user }: { user: User }) {
     setIsDialogOpen(true);
   };
 
+  const appUser = {
+      name: user.displayName || 'Anonymous',
+      email: user.email || 'no-email@example.com'
+  }
+
   return (
     <>
       <RequestGameDialog
         isOpen={isDialogOpen}
         setIsOpen={setIsDialogOpen}
-        user={user}
+        user={appUser}
         gameName={selectedGame}
       />
       <Header />
