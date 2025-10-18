@@ -24,8 +24,8 @@ interface RequestGameDialogProps {
 }
 
 const requestSchema = z.object({
-  name: z.string(),
-  email: z.string(),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
   gameName: z.string().min(2, "Game name is required."),
   platform: z.string().min(1, "Please select a platform."),
   notes: z.string().optional(),
@@ -111,8 +111,33 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
         </DialogHeader>
         <Form {...form}>
           <form action={formAction} className="space-y-4">
-             <input type="hidden" {...form.register('name')} value={user.name} />
-             <input type="hidden" {...form.register('email')} value={user.email} />
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your Name" {...field} />
+                  </FormControl>
+                  <FormMessage>{state.errors?.name}</FormMessage>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="Your Email" {...field} />
+                  </FormControl>
+                  <FormMessage>{state.errors?.email}</FormMessage>
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
