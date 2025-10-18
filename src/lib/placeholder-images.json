@@ -43,18 +43,6 @@
       "imageHint": "car crash"
     },
     {
-      "id": "fifa_24",
-      "description": "FIFA 24 Cover Art",
-      "imageUrl": "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzb2NjZXIlMjBnYW1lfGVufDB8fHx8MTc2MDczODc4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "soccer game"
-    },
-    {
-      "id": "fortnite",
-      "description": "Fortnite Cover Art",
-      "imageUrl": "https://images.unsplash.com/photo-1683140275090-996c8f9b4587?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxiYXR0bGUlMjByb3lhbGV8ZW58MHx8fHwxNzYwNzY1MDQyfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "battle royale"
-    },
-    {
       "id": "fc_26_announcement",
       "description": "FC 26 Is Now Available Announcement Image",
       "imageUrl": "https://static.wixstatic.com/media/a827d0_6e20907f3d6640d8bcb5320b54972418~mv2.png",

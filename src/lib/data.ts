@@ -26,14 +26,4 @@ export const availableGames: Game[] = [
     platforms: ['PC'],
     imageId: 'beamng_drive',
   },
-  {
-    title: 'FIFA 24',
-    platforms: ['PC', 'PS5', 'Xbox Series X', 'Switch'],
-    imageId: 'fifa_24',
-  },
-  {
-    title: 'Fortnite',
-    platforms: ['PC', 'PS5', 'Xbox Series X', 'Switch'],
-    imageId: 'fortnite',
-  },
 ];
