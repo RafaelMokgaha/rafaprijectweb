@@ -17,6 +17,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Badge } from '@/components/ui/badge';
+import { Paperclip } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -24,6 +25,8 @@ interface Message {
   body: string;
   sentAt: any;
   isRead: boolean;
+  attachmentUrl?: string;
+  attachmentName?: string;
 }
 
 function Inbox() {
@@ -85,7 +88,17 @@ function Inbox() {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4 bg-background/50 rounded-b-lg">
-                                    <p>{msg.body}</p>
+                                    <p className="whitespace-pre-wrap">{msg.body}</p>
+                                    {msg.attachmentUrl && (
+                                        <div className="mt-4">
+                                            <Button asChild variant="outline" size="sm">
+                                                <Link href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                                                    <Paperclip className="mr-2 h-4 w-4" />
+                                                    {msg.attachmentName || 'Download Attachment'}
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    )}
                                 </AccordionContent>
                             </AccordionItem>
                         ))}
@@ -109,3 +122,5 @@ export default function InboxPage() {
         </AuthGate>
     )
 }
+
+    
