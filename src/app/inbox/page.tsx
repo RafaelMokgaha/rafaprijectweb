@@ -1,3 +1,4 @@
+
 'use client';
 
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -25,8 +26,6 @@ interface Message {
   body: string;
   sentAt: any;
   isRead: boolean;
-  attachmentUrl?: string;
-  attachmentName?: string;
 }
 
 function Inbox() {
@@ -89,16 +88,6 @@ function Inbox() {
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4 bg-background/50 rounded-b-lg">
                                     <p className="whitespace-pre-wrap">{msg.body}</p>
-                                    {msg.attachmentUrl && (
-                                        <div className="mt-4">
-                                            <Button asChild variant="outline" size="sm">
-                                                <Link href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                                                    <Paperclip className="mr-2 h-4 w-4" />
-                                                    {msg.attachmentName || 'Download Attachment'}
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    )}
                                 </AccordionContent>
                             </AccordionItem>
                         ))}

@@ -1,10 +1,10 @@
+
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -35,16 +35,13 @@ export function initializeFirebase() {
 
 export function getSdks(firebaseApp: FirebaseApp) {
   const firestore = getFirestore(firebaseApp);
-  const storage = getStorage(firebaseApp);
   // Example of connecting to the emulator
   // connectFirestoreEmulator(firestore, 'localhost', 8080);
-  // connectStorageEmulator(storage, 'localhost', 9199);
   
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
     firestore,
-    storage
   };
 }
 
@@ -56,5 +53,3 @@ export * from './non-blocking-updates';
 export * from './non-blocking-login';
 export * from './errors';
 export * from './error-emitter';
-
-    

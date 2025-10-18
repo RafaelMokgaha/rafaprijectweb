@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "GameRequest": {
@@ -151,14 +152,6 @@
         "isRead": {
           "type": "boolean",
           "description": "Whether the user has read the message."
-        },
-        "attachmentUrl": {
-          "type": "string",
-          "description": "URL of the attached file in Firebase Storage."
-        },
-        "attachmentName": {
-          "type": "string",
-          "description": "The original name of the attached file."
         }
       },
       "required": [

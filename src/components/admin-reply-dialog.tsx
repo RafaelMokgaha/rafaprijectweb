@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -11,10 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
-import { useFirestore, useStorage } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { v4 as uuidv4 } from 'uuid';
 
 interface AdminReplyDialogProps {
   isOpen: boolean;
@@ -30,7 +29,6 @@ interface AdminReplyDialogProps {
 const replySchema = z.object({
   subject: z.string().min(1, "Subject is required"),
   body: z.string().min(1, "Message body is required"),
-  attachment: z.any().optional(),
 });
 
 type ReplyFormValues = z.infer<typeof replySchema>;
@@ -38,7 +36,6 @@ type ReplyFormValues = z.infer<typeof replySchema>;
 export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialogProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const storage = useStorage();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ReplyFormValues>({
@@ -46,27 +43,23 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
     defaultValues: {
       subject: '',
       body: '',
-      attachment: undefined,
     },
   });
-
-  const attachmentRef = form.register("attachment");
 
   useEffect(() => {
     if (request) {
       form.reset({
         subject: `Re: Your game request for ${request.gameName}`,
         body: `Hi ${request.name},\n\nRegarding your request for ${request.gameName}...\n\n`,
-        attachment: undefined,
       });
     }
   }, [request, form]);
 
   const onSubmit = async (data: ReplyFormValues) => {
-    if (!firestore || !request || !storage) {
+    if (!firestore || !request) {
       toast({
         title: "Error",
-        description: "Cannot send message. Invalid request or database/storage connection.",
+        description: "Cannot send message. Invalid request or database connection.",
         variant: "destructive",
       });
       return;
@@ -75,24 +68,9 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
     setIsSubmitting(true);
 
     try {
-      let attachmentUrl: string | undefined = undefined;
-      let attachmentName: string | undefined = undefined;
-      const file = data.attachment?.[0];
-
-      if (file) {
-        const fileId = uuidv4();
-        const storageRef = ref(storage, `message_attachments/${request.userId}/${fileId}-${file.name}`);
-        
-        toast({ title: "Uploading file...", description: "Please wait." });
-        const uploadResult = await uploadBytes(storageRef, file);
-        attachmentUrl = await getDownloadURL(uploadResult.ref);
-        attachmentName = file.name;
-        toast({ title: "Upload complete!", description: "File is attached." });
-      }
-
       const messagesCollection = collection(firestore, `users/${request.userId}/messages`);
       
-      const messageData: any = {
+      const messageData = {
         receiverId: request.userId,
         subject: data.subject,
         body: data.body,
@@ -100,11 +78,6 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
         isRead: false,
         gameRequestId: request.id,
       };
-
-      if (attachmentUrl && attachmentName) {
-        messageData.attachmentUrl = attachmentUrl;
-        messageData.attachmentName = attachmentName;
-      }
       
       await addDoc(messagesCollection, messageData);
 
@@ -164,20 +137,6 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
                     <Textarea placeholder="Write your message here..." {...field} rows={6} />
                   </FormControl>
                    <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="attachment"
-              render={({ field }) => (
-                 <FormItem>
-                  <FormLabel>Attachment (Optional)</FormLabel>
-                  <FormControl>
-                    <Input type="file" {...attachmentRef} />
-                  </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
