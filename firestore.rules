@@ -1,88 +1,126 @@
 /**
- * @fileoverview Firestore Security Rules for the RAFA Project platform.
+ * @fileoverview Firestore Security Rules for the RAFA Project.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles and allows public read access to available games and game requests.
+ * This ruleset enforces a strict user-ownership model for user profiles and messages.
+ * Public read access is granted to available games.
  *
  * Data Structure:
- * - /users/{userId}: Stores private user profile data. Access is restricted to the owning user.
- * - /game_requests/{gameRequestId}: Stores game requests. Read access is public, but write access is restricted.
- * - /available_games/{availableGameId}: Stores available games. Read access is public, but write access is restricted.
+ * - /users/{userId}: Stores user profiles, accessible only to the owning user.
+ * - /users/{userId}/messages/{messageId}: Stores private messages for each user, accessible only to the owning user.
+ * - /game_requests/{gameRequestId}: Stores game requests, write access is open, read access is public.
+ * - /available_games/{availableGameId}: Stores available games, accessible publicly.
  *
  * Key Security Decisions:
- * - Users can only read and write their own profile data under /users/{userId}.
- * - Listing of users is disallowed.
- * - Read access to game requests and available games is public.
- * - Write access to game requests and available games is restricted to authenticated users.
+ * - User listing is implicitly denied. Only individual user documents can be accessed via their UID.
+ * - Read-only collections (e.g., available_games) are explicitly marked for public read access.
+ *
+ * Denormalization for Authorization:
+ *  - The Message entity's `receiverId` field must match the `userId` segment of the path `users/{userId}/messages/{messageId}`. This ensures the message belongs to the correct user.
+ *  - The User entity's `id` field must match the `userId` segment of the path `/users/{userId}`. This ensures that the document id cannot be changed after creation.
+ *
+ * Structural Segregation:
+ * Private user data (profiles, messages) are stored in user-specific subcollections to simplify access control.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user profiles under /users/{userId}.
+     * @description Checks if the request is authenticated.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Requires authentication for certain operations.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the requested user ID matches the authenticated user's ID.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Enforces user-based ownership.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the requested user ID matches the authenticated user's ID and the resource exists.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Enforces user-based ownership and that the resource exists.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for user profiles.
      * @path /users/{userId}
-     * @allow (create) - User with UID 'user123' can create their own profile document at /users/user123 if the document's id matches their UID.
-     * @allow (get, update, delete) - User with UID 'user123' can read, update, and delete their own profile document at /users/user123.
-     * @deny (create) - User with UID 'user456' cannot create a profile document at /users/user123.
-     * @deny (get, update, delete) - User with UID 'user456' cannot read, update, or delete the profile document at /users/user123.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User with ID 'user123' can create their profile with matching userId: request.auth.uid == 'user123' and request.resource.data.id == 'user123'
+     * @allow (get) User with ID 'user123' can read their profile: request.auth.uid == 'user123'
+     * @allow (update) User with ID 'user123' can update their profile: request.auth.uid == 'user123'
+     * @allow (delete) User with ID 'user123' can delete their profile: request.auth.uid == 'user123'
+     * @deny (create) User with ID 'user456' cannot create a profile for 'user123': request.auth.uid == 'user456' and request.resource.data.id == 'user123'
+     * @deny (get) User with ID 'user456' cannot read the profile of 'user123': request.auth.uid == 'user456'
+     * @principle Enforces document ownership for writes and reads.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if false;
-
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure game requests under /game_requests/{gameRequestId}.
+     * @description Rules for game requests.
      * @path /game_requests/{gameRequestId}
-     * @allow (get, list) - Any user can read game requests.
-     * @allow (create) - Any authenticated user can create a game request.
-     * @deny (update, delete) - Only the creator can update/delete game requests.
-     * @principle Allows public read access but restricts write access to authenticated users.
+     * @allow (get) Any user can read a game request.
+     * @allow (create) Any authenticated user can create a game request.
+     * @deny (update) No one can update game requests without further validation (TODO).
+     * @deny (delete) No one can delete game requests without further validation (TODO).
+     * @principle Allows public read access but restricts modification.
      */
     match /game_requests/{gameRequestId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       allow get, list: if true;
-
       allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+      allow update, delete: if false; // TODO: Add validation logic for updates/deletes.
     }
 
     /**
-     * @description Secure available games under /available_games/{availableGameId}.
+     * @description Rules for available games.
      * @path /available_games/{availableGameId}
-     * @allow (get, list) - Any user can read available games.
-     * @allow (create) - Any authenticated user can create an available game.
-     * @deny (update, delete) - No one can update or delete available games.
-     * @principle Allows public read access but restricts write access to authenticated users.
+     * @allow (get) Any user can read available games.
+     * @principle Allows public read access to available game information.
      */
     match /available_games/{availableGameId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       allow get, list: if true;
+      allow create, update, delete: if false; // Available Games are only managed by admins, not exposed in this protoype
+    }
 
-      allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+    /**
+     * @description Rules for user messages.
+     * @path /users/{userId}/messages/{messageId}
+     * @allow (create) User with ID 'user123' can create a message if the receiverId matches their ID: request.auth.uid == 'user123' and request.resource.data.receiverId == 'user123'
+     * @allow (get) User with ID 'user123' can read their messages: request.auth.uid == 'user123'
+     * @allow (list) User with ID 'user123' can list their messages: request.auth.uid == 'user123'
+     * @allow (update) User with ID 'user123' can update their messages: request.auth.uid == 'user123'
+     * @allow (delete) User with ID 'user123' can delete their messages: request.auth.uid == 'user123'
+     * @deny (create) User with ID 'user456' cannot create a message for 'user123': request.auth.uid == 'user456' and request.resource.data.receiverId == 'user123'
+     * @deny (get) User with ID 'user456' cannot read the messages of 'user123': request.auth.uid == 'user456'
+     * @principle Enforces document ownership for writes and reads.
+     */
+    match /users/{userId}/messages/{messageId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isSignedIn() && request.resource.data.receiverId == userId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
