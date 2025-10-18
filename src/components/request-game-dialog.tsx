@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 interface RequestGameDialogProps {
   isOpen: boolean;
@@ -80,8 +79,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     try {
       const gameRequestsCollection = collection(firestore, 'game_requests');
       
-      // Use the non-blocking update to add the document
-      addDocumentNonBlocking(gameRequestsCollection, {
+      await addDoc(gameRequestsCollection, {
         userId: user.uid,
         name: data.name,
         email: data.email,
@@ -96,6 +94,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       form.reset();
 
     } catch (error) {
+       console.error("Error adding document: ", error);
        toast({
         title: "Error",
         description: "Failed to send request. Please try again.",
