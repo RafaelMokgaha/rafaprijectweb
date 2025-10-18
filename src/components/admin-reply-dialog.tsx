@@ -12,9 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useFirestore, useStorage } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { addDocumentNonBlocking } from '@/firebase';
 
 interface AdminReplyDialogProps {
   isOpen: boolean;
@@ -75,8 +76,8 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
     setIsSubmitting(true);
 
     try {
-      let attachmentUrl: string | null = null;
-      let attachmentName: string | null = null;
+      let attachmentUrl: string | undefined = undefined;
+      let attachmentName: string | undefined = undefined;
       const file = data.attachment?.[0];
 
       if (file) {
@@ -105,8 +106,8 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
         messageData.attachmentUrl = attachmentUrl;
         messageData.attachmentName = attachmentName;
       }
-
-      await addDoc(messagesCollection, messageData);
+      
+      addDocumentNonBlocking(messagesCollection, messageData);
 
       toast({
         title: "Message Sent!",
