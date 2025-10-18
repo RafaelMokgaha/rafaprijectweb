@@ -48,7 +48,7 @@ export function LoginPage() {
     } catch (error: any) {
       toast({
         title: 'Login Failed',
-        description: error.message,
+        description: "Invalid email or password. Please try again.",
         variant: 'destructive',
       });
     } finally {
@@ -64,14 +64,24 @@ export function LoginPage() {
       await updateProfile(userCredential.user, {
         displayName: signupName,
       });
+      // Email verification is handled by the AuthGate now.
       toast({
         title: 'Sign Up Successful',
-        description: 'Your account has been created.',
+        description: 'Your account has been created. Please check your email to verify your account.',
       });
     } catch (error: any) {
+      let description = "An unexpected error occurred during sign-up. Please try again.";
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'An account with this email already exists. Please log in or use a different email.';
+      } else if (error.code === 'auth/invalid-email') {
+        description = 'The email address is not valid. Please enter a valid email.';
+      } else if (error.code === 'auth/weak-password') {
+        description = 'The password is too weak. Please choose a stronger password.';
+      }
+      
       toast({
         title: 'Sign Up Failed',
-        description: error.message,
+        description: description,
         variant: 'destructive',
       });
     } finally {
