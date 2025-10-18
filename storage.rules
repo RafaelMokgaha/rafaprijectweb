@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow admin to upload any file type for messages.
+    // This rule allows any authenticated user to write to the message_attachments path.
+    // In a production environment with more defined roles, you would restrict this further.
+    match /message_attachments/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
