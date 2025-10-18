@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useActionState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,9 +10,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { sendGameRequest, type FormState } from '@/app/actions';
 import { Icons } from './icons';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 interface RequestGameDialogProps {
   isOpen: boolean;
@@ -34,9 +34,8 @@ type RequestFormValues = z.infer<typeof requestSchema>;
 export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: RequestGameDialogProps) {
   const { toast } = useToast();
   const { user } = useUser();
-  
-  const initialState: FormState = { message: '', success: false };
-  const [state, formAction] = useActionState(sendGameRequest, initialState);
+  const firestore = useFirestore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
@@ -59,21 +58,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     }
   }, [isOpen, gameName, form, user]);
 
-  useEffect(() => {
-    if (state.success) {
-      onSuccess(); // Call the onSuccess callback instead of showing toast directly
-      form.reset();
-    } else if (state.message && (state.errors || !state.success)) {
-       toast({
-        title: "Error",
-        description: state.message,
-        variant: "destructive",
-      });
-    }
-  }, [state, toast, form, onSuccess]);
-  
-  const isSubmitting = form.formState.isSubmitting;
-
   const onOpenChange = (open: boolean) => {
     if (!open) {
       form.reset();
@@ -81,16 +65,44 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     setIsOpen(open);
   };
   
-  const handleFormAction = (formData: FormData) => {
-    if (user) {
-      formData.append('userId', user.uid);
-      formAction(formData);
-    } else {
+  const onSubmit = async (data: RequestFormValues) => {
+    if (!user || !firestore) {
       toast({
         title: "Error",
         description: "You must be logged in to make a request.",
         variant: "destructive",
       });
+      return;
+    }
+    
+    setIsSubmitting(true);
+
+    try {
+      const gameRequestsCollection = collection(firestore, 'game_requests');
+      
+      // Use the non-blocking update to add the document
+      addDocumentNonBlocking(gameRequestsCollection, {
+        userId: user.uid,
+        name: data.name,
+        email: data.email,
+        gameName: data.gameName,
+        notes: data.notes || '',
+        platform: 'PC',
+        requestDate: serverTimestamp(),
+        status: 'pending',
+      });
+      
+      onSuccess();
+      form.reset();
+
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: "Failed to send request. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -105,7 +117,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form action={handleFormAction} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -115,7 +127,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
                   <FormControl>
                     <Input placeholder="Your Name" {...field} />
                   </FormControl>
-                  <FormMessage>{state.errors?.name}</FormMessage>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -129,7 +141,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
                   <FormControl>
                     <Input type="email" placeholder="Your Email" {...field} />
                   </FormControl>
-                  <FormMessage>{state.errors?.email}</FormMessage>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -143,7 +155,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
                   <FormControl>
                     <Input placeholder="e.g., Elden Ring" {...field} />
                   </FormControl>
-                  <FormMessage>{state.errors?.gameName}</FormMessage>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -157,7 +169,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
                   <FormControl>
                     <Textarea placeholder="Any specific version or details?" {...field} />
                   </FormControl>
-                   <FormMessage>{state.errors?.notes}</FormMessage>
+                   <FormMessage />
                 </FormItem>
               )}
             />
