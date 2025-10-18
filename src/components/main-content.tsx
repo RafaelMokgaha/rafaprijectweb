@@ -10,9 +10,11 @@ import { InstructionsSection } from '@/components/instructions-section';
 import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
+import { PaymentConfirmationDialog } from '@/components/payment-confirmation-dialog';
 
 export function MainContent() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState('');
   const availableGamesRef = useRef<HTMLDivElement>(null);
 
@@ -20,25 +22,35 @@ export function MainContent() {
     availableGamesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const openRequestDialog = (gameName = '') => {
+  const openRequestFlow = (gameName = '') => {
     setSelectedGame(gameName);
-    setIsDialogOpen(true);
+    setIsPaymentDialogOpen(true);
+  };
+
+  const handlePaymentConfirm = () => {
+    setIsPaymentDialogOpen(false);
+    setIsRequestDialogOpen(true);
   };
 
   return (
     <>
+      <PaymentConfirmationDialog
+        isOpen={isPaymentDialogOpen}
+        onCancel={() => setIsPaymentDialogOpen(false)}
+        onConfirm={handlePaymentConfirm}
+      />
       <RequestGameDialog
-        isOpen={isDialogOpen}
-        setIsOpen={setIsDialogOpen}
+        isOpen={isRequestDialogOpen}
+        setIsOpen={setIsRequestDialogOpen}
         gameName={selectedGame}
       />
       <Header />
       <div className="flex flex-col min-h-screen">
         <main className="flex-grow container mx-auto px-4">
-          <HeroSection onRequestClick={() => openRequestDialog()} onAvailableClick={handleScrollToGames} />
+          <HeroSection onRequestClick={() => openRequestFlow()} onAvailableClick={handleScrollToGames} />
           <AnnouncementSection />
           <div ref={availableGamesRef} className="scroll-mt-24">
-             <AvailableGames onRequestClick={openRequestDialog} />
+             <AvailableGames onRequestClick={openRequestFlow} />
           </div>
           <TutorialSection />
           <InstructionsSection />
