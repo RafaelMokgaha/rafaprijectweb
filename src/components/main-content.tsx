@@ -18,6 +18,8 @@ import { signOut } from 'firebase/auth';
 import { Button } from './ui/button';
 import Link from 'next/link';
 
+const ADMIN_EMAIL = 'Rafaproject06@gmail.com';
+
 export function MainContent() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -27,6 +29,7 @@ export function MainContent() {
   const { toast } = useToast();
   const { user } = useUser();
   const auth = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -92,9 +95,11 @@ export function MainContent() {
              <Button variant="outline" size="sm" asChild>
                 <Link href="/inbox">Inbox</Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
-                <Link href="/admin">Admin</Link>
-            </Button>
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                  <Link href="/admin">Admin</Link>
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
           </div>
         )}
