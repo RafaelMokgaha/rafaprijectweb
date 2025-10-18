@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useUser, useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icons } from '@/components/icons';
 import { updateProfile } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -34,8 +34,16 @@ export default function CompleteProfilePage() {
     },
   });
 
+  useEffect(() => {
+    // If user is loaded and not authenticated, redirect them away
+    if (!isUserLoading && !user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
+
   async function onSubmit(data: ProfileFormValues) {
-    if (!user) {
+    if (!user || !firestore) {
       setFirebaseError('You must be logged in to complete your profile.');
       return;
     }
@@ -52,6 +60,7 @@ export default function CompleteProfilePage() {
         profileComplete: true,
       };
 
+      // Use non-blocking update
       updateDoc(userDocRef, profileData).catch(error => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: userDocRef.path,
@@ -62,11 +71,12 @@ export default function CompleteProfilePage() {
 
       router.push('/');
     } catch (error: any) {
+      console.error("Error updating profile:", error);
       setFirebaseError(error.message);
     }
   }
   
-  if (isUserLoading) {
+  if (isUserLoading || !user) {
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center text-primary-foreground gap-4">
         <Icons.loader className="h-12 w-12 animate-spin text-primary" />

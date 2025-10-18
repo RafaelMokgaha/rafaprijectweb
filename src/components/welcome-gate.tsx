@@ -44,6 +44,7 @@ export function WelcomeGate() {
   });
 
   async function onSignUp(data: SignUpFormValues) {
+    if (!auth || !firestore) return;
     setFirebaseError(null);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
@@ -56,7 +57,8 @@ export function WelcomeGate() {
           profileComplete: false,
       };
 
-      setDoc(userDocRef, userDocData, { merge: true }).catch(error => {
+      // Non-blocking write
+      setDoc(userDocRef, userDocData).catch(error => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: userDocRef.path,
           operation: 'create',
@@ -70,6 +72,7 @@ export function WelcomeGate() {
   }
 
   async function onSignIn(data: SignInFormValues) {
+    if (!auth) return;
     setFirebaseError(null);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
