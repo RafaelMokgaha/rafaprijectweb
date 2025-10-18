@@ -34,7 +34,7 @@ interface GameRequest {
     notes: string;
 }
 
-const ADMIN_EMAIL = 'Rafaproject06@gmail.com';
+const ADMIN_EMAIL = 'rafaproject06@gmail.com';
 
 function AdminDashboard() {
   const firestore = useFirestore();
@@ -157,7 +157,7 @@ function NotAuthorized() {
 
 export default function AdminPage() {
     const { user } = useUser();
-    const isAdmin = user?.email === ADMIN_EMAIL;
+    const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
     return (
         <AuthGate>
