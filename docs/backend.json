@@ -162,7 +162,6 @@
         }
       },
       "required": [
-        "id",
         "receiverId",
         "subject",
         "body",
@@ -250,5 +249,3 @@
     "reasoning": "The Firestore structure is designed to store game requests, available games, user data and messages for the RAFA Project Launcher. It prioritizes simplicity and security. User data is stored in a private collection using path-based ownership. Messages are stored as a subcollection under each user to enforce privacy. Game requests are stored in a flat collection. Available games are stored in a separate flat collection.\n\nAuthorization Independence:\nThere is no need to denormalize any data.\n\nQAPs:\nList operations are secured by structural segregation."
   }
 }
-
-    
