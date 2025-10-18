@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useActionState } from 'react';
+import { useEffect } from 'react';
+import { useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -50,10 +51,17 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
   });
 
   useEffect(() => {
-    if (gameName) {
-      form.setValue('gameName', gameName);
+    // When the user prop changes (e.g., after login), reset the form with the new user details
+    if (user) {
+      form.reset({
+        name: user.name,
+        email: user.email,
+        gameName: gameName || '',
+        platform: '',
+        notes: '',
+      });
     }
-  }, [gameName, form]);
+  }, [user, gameName, form]);
 
   useEffect(() => {
     if (state.success) {
@@ -62,7 +70,13 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
         description: state.message,
       });
       setIsOpen(false);
-      form.reset();
+      form.reset({ // Reset with user details after successful submission
+        name: user.name,
+        email: user.email,
+        gameName: '',
+        platform: '',
+        notes: ''
+      });
     } else if (state.message && state.errors) {
        toast({
         title: "Error",
@@ -70,12 +84,24 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
         variant: "destructive",
       });
     }
-  }, [state, toast, setIsOpen, form]);
+  }, [state, toast, setIsOpen, form, user]);
   
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        // Reset form when dialog is closed
+        form.reset({
+            name: user.name,
+            email: user.email,
+            gameName: '',
+            platform: '',
+            notes: ''
+        });
+      }
+      setIsOpen(open);
+    }}>
       <DialogContent className="sm:max-w-[480px] bg-background/80 backdrop-blur-xl border-primary/50">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl text-shadow-glow">Request a Game</DialogTitle>
