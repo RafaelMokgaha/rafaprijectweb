@@ -29,7 +29,7 @@ export function PaymentConfirmationDialog({
         <AlertDialogHeader>
           <AlertDialogTitle className="font-headline text-2xl text-shadow-glow">Payment Required</AlertDialogTitle>
           <AlertDialogDescription className="text-base text-primary-foreground/80">
-            A payment of $100 is required to submit a game request.
+            A payment of R100 is required to submit a game request.
             <br />
             <br />
             Please confirm you want to proceed.
