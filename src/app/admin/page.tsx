@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { collection } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
@@ -46,7 +46,7 @@ function AdminDashboard() {
 
   const gameRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'game_requests');
+    return query(collection(firestore, 'game_requests'), orderBy('requestDate', 'desc'));
   }, [firestore]);
 
   const { data: gameRequests, isLoading, error } = useCollection<GameRequest>(gameRequestsQuery);
@@ -66,6 +66,17 @@ function AdminDashboard() {
   const handleReplyClick = (request: GameRequest) => {
     setSelectedRequest(request);
     setIsReplyDialogOpen(true);
+  }
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'secondary';
+      case 'solved':
+        return 'default';
+      default:
+        return 'outline';
+    }
   }
 
   return (
@@ -113,14 +124,16 @@ function AdminDashboard() {
                         <TableCell>{req.name}</TableCell>
                         <TableCell>{req.email}</TableCell>
                         <TableCell>
-                          <Badge variant={req.status === 'pending' ? 'secondary' : 'default'}>
+                           <Badge variant={getStatusVariant(req.status)}>
                             {req.status}
                           </Badge>
                         </TableCell>
                         <TableCell>{formatDate(req.requestDate)}</TableCell>
                         <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
                         <TableCell>
-                            <Button variant="outline" size="sm" onClick={() => handleReplyClick(req)}>Reply</Button>
+                            <Button variant="outline" size="sm" onClick={() => handleReplyClick(req)} disabled={req.status.toLowerCase() === 'solved'}>
+                               {req.status.toLowerCase() === 'solved' ? 'Solved' : 'Reply'}
+                            </Button>
                         </TableCell>
                       </TableRow>
                     ))

@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useFirestore } from '@/firebase';
-import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, serverTimestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
 
 interface AdminReplyDialogProps {
   isOpen: boolean;
@@ -81,19 +81,25 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
       
       await addDoc(messagesCollection, messageData);
 
+      // Update the game request status to 'solved'
+      const gameRequestRef = doc(firestore, 'game_requests', request.id);
+      await updateDoc(gameRequestRef, {
+        status: 'solved'
+      });
+
       toast({
-        title: "Message Sent!",
-        description: `Your reply has been sent to ${request.name}.`,
+        title: "Message Sent & Request Solved!",
+        description: `Your reply has been sent and the status for "${request.gameName}" is now 'solved'.`,
       });
       
       setIsOpen(false);
       form.reset();
 
     } catch (error) {
-       console.error("Error sending message: ", error);
+       console.error("Error sending message or updating status: ", error);
        toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: "Failed to send message or update status. Please try again.",
         variant: "destructive",
       });
     } finally {
