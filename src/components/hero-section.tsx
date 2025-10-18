@@ -12,7 +12,7 @@ export function HeroSection({ onRequestClick, onAvailableClick }: HeroSectionPro
         Welcome to RAFA Project
       </h1>
       <p className="mt-4 text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto">
-        What fix or game request do you need?
+        WHICH GAME DO U WANT OR NEED
       </p>
       <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Button 
