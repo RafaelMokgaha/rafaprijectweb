@@ -13,6 +13,7 @@ export default function Home() {
   useEffect(() => {
     let storedUser: User | null = null;
     try {
+      // This code runs only on the client, after hydration
       const userJson = localStorage.getItem('rafa_project_user');
       if (userJson) {
         storedUser = JSON.parse(userJson);
