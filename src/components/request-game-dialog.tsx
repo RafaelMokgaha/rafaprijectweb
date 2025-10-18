@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useFormState } from 'react-dom';
+import { useEffect, useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -37,7 +36,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
   const { toast } = useToast();
   
   const initialState: FormState = { message: '', success: false };
-  const [state, formAction] = useFormState(sendGameRequest, initialState);
+  const [state, formAction] = useActionState(sendGameRequest, initialState);
 
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
