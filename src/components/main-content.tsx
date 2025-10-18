@@ -10,10 +10,8 @@ import { InstructionsSection } from '@/components/instructions-section';
 import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
-import type { User as FirebaseUser } from 'firebase/auth';
-import type { User } from '@/lib/types';
 
-export function MainContent({ user }: { user: FirebaseUser }) {
+export function MainContent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState('');
   const availableGamesRef = useRef<HTMLDivElement>(null);
@@ -27,18 +25,11 @@ export function MainContent({ user }: { user: FirebaseUser }) {
     setIsDialogOpen(true);
   };
 
-  const appUser: User = {
-      uid: user.uid,
-      name: user.displayName || 'Anonymous',
-      email: user.email || 'no-email@example.com'
-  }
-
   return (
     <>
       <RequestGameDialog
         isOpen={isDialogOpen}
         setIsOpen={setIsDialogOpen}
-        user={appUser}
         gameName={selectedGame}
       />
       <Header />

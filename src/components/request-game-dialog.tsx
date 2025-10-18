@@ -13,13 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { sendGameRequest, type FormState } from '@/app/actions';
-import type { User } from '@/lib/types';
 import { Icons } from './icons';
 
 interface RequestGameDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  user: User;
   gameName?: string;
 }
 
@@ -33,7 +31,7 @@ const requestSchema = z.object({
 
 type RequestFormValues = z.infer<typeof requestSchema>;
 
-export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: RequestGameDialogProps) {
+export function RequestGameDialog({ isOpen, setIsOpen, gameName }: RequestGameDialogProps) {
   const { toast } = useToast();
   
   const initialState: FormState = { message: '', success: false };
@@ -42,8 +40,8 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
-      name: user.name,
-      email: user.email,
+      name: '',
+      email: '',
       gameName: gameName || '',
       platform: '',
       notes: '',
@@ -51,17 +49,17 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
   });
 
   useEffect(() => {
-    // When the user prop changes (e.g., after login), reset the form with the new user details
-    if (user) {
+    // When the dialog is opened with a specific game, reset the form with that game's name
+    if (isOpen) {
       form.reset({
-        name: user.name,
-        email: user.email,
+        name: '',
+        email: '',
         gameName: gameName || '',
         platform: '',
         notes: '',
       });
     }
-  }, [user, gameName, form]);
+  }, [isOpen, gameName, form]);
 
   useEffect(() => {
     if (state.success) {
@@ -70,38 +68,27 @@ export function RequestGameDialog({ isOpen, setIsOpen, user, gameName }: Request
         description: state.message,
       });
       setIsOpen(false);
-      form.reset({ // Reset with user details after successful submission
-        name: user.name,
-        email: user.email,
-        gameName: '',
-        platform: '',
-        notes: ''
-      });
-    } else if (state.message && state.errors) {
+      form.reset();
+    } else if (state.message && (state.errors || !state.success)) {
        toast({
         title: "Error",
         description: state.message,
         variant: "destructive",
       });
     }
-  }, [state, toast, setIsOpen, form, user]);
+  }, [state, toast, setIsOpen, form]);
   
   const isSubmitting = form.formState.isSubmitting;
 
+  const onOpenChange = (open: boolean) => {
+    if (!open) {
+      form.reset();
+    }
+    setIsOpen(open);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        // Reset form when dialog is closed
-        form.reset({
-            name: user.name,
-            email: user.email,
-            gameName: '',
-            platform: '',
-            notes: ''
-        });
-      }
-      setIsOpen(open);
-    }}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px] bg-background/80 backdrop-blur-xl border-primary/50">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl text-shadow-glow">Request a Game</DialogTitle>
