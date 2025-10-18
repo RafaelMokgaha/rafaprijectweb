@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
 import { AdminReplyDialog } from '@/components/admin-reply-dialog';
+import { AlertTriangle } from 'lucide-react';
 
 interface GameRequest {
     id: string;
@@ -32,6 +33,8 @@ interface GameRequest {
     requestDate: any;
     notes: string;
 }
+
+const ADMIN_EMAIL = 'Rafaproject06@gmail.com';
 
 function AdminDashboard() {
   const firestore = useFirestore();
@@ -75,7 +78,7 @@ function AdminDashboard() {
       <Header>
          {user && (
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-primary-foreground">Welcome, {user.displayName || user.email}</span>
+            <span className="text-sm font-medium text-primary-foreground">Welcome, Admin</span>
             <Button variant="outline" size="sm" asChild>
                 <Link href="/">Home</Link>
             </Button>
@@ -138,11 +141,27 @@ function AdminDashboard() {
   );
 }
 
+function NotAuthorized() {
+  return (
+    <div className="flex flex-col items-center justify-center h-screen text-center">
+        <AlertTriangle className="w-16 h-16 text-destructive mb-4" />
+        <h1 className="text-4xl font-headline font-bold text-destructive">Access Denied</h1>
+        <p className="mt-2 text-lg text-muted-foreground">You do not have permission to view this page.</p>
+        <Button asChild className="mt-6">
+            <Link href="/">Return to Home</Link>
+        </Button>
+    </div>
+  )
+}
+
 
 export default function AdminPage() {
+    const { user } = useUser();
+    const isAdmin = user?.email === ADMIN_EMAIL;
+
     return (
         <AuthGate>
-            <AdminDashboard />
+            {isAdmin ? <AdminDashboard /> : <NotAuthorized />}
         </AuthGate>
     )
 }
