@@ -25,7 +25,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
           {bgImage && (
             <div 
-              className="fixed inset-0 z-[-2] bg-cover bg-center" 
+              className="fixed inset-0 z-[-2] bg-cover bg-center animate-ken-burns" 
               style={{ backgroundImage: `url(${bgImage.imageUrl})` }}
               data-ai-hint={bgImage.imageHint}
             />

@@ -65,4 +65,19 @@
       0 0 10px hsl(var(--primary)),
       0 0 20px hsl(var(--accent));
   }
+
+  @keyframes ken-burns {
+    0% {
+      transform: scale(1) translate(0, 0);
+      transform-origin: center center;
+    }
+    100% {
+      transform: scale(1.1) translate(-2%, 2%);
+      transform-origin: center center;
+    }
+  }
+
+  .animate-ken-burns {
+    animation: ken-burns 40s ease-in-out infinite alternate;
+  }
 }
