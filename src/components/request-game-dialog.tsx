@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { sendGameRequest, type FormState } from '@/app/actions';
 import { Icons } from './icons';
+import { useUser } from '@/firebase';
 
 interface RequestGameDialogProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ type RequestFormValues = z.infer<typeof requestSchema>;
 
 export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: RequestGameDialogProps) {
   const { toast } = useToast();
+  const { user } = useUser();
   
   const initialState: FormState = { message: '', success: false };
   const [state, formAction] = useActionState(sendGameRequest, initialState);
@@ -49,13 +51,13 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        name: '',
-        email: '',
+        name: user?.displayName || '',
+        email: user?.email || '',
         gameName: gameName || '',
         notes: '',
       });
     }
-  }, [isOpen, gameName, form]);
+  }, [isOpen, gameName, form, user]);
 
   useEffect(() => {
     if (state.success) {
@@ -78,6 +80,20 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     }
     setIsOpen(open);
   };
+  
+  const handleFormAction = (formData: FormData) => {
+    if (user) {
+      formData.append('userId', user.uid);
+      formAction(formData);
+    } else {
+      toast({
+        title: "Error",
+        description: "You must be logged in to make a request.",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -89,7 +105,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form action={formAction} className="space-y-4">
+          <form action={handleFormAction} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -146,7 +162,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
               )}
             />
 
-            <Button type="submit" className="w-full font-bold tracking-wider uppercase" disabled={isSubmitting}>
+            <Button type="submit" className="w-full font-bold tracking-wider uppercase" disabled={isSubmitting || !user}>
                {isSubmitting && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Sending Request...' : 'Submit Request'}
             </Button>

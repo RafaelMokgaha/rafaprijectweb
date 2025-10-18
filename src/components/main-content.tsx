@@ -13,6 +13,9 @@ import { RequestGameDialog } from '@/components/request-game-dialog';
 import { PaymentConfirmationDialog } from '@/components/payment-confirmation-dialog';
 import { PaymentFormDialog } from '@/components/payment-form-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useUser, useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { Button } from './ui/button';
 
 export function MainContent() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
@@ -21,13 +24,27 @@ export function MainContent() {
   const [selectedGame, setSelectedGame] = useState('');
   const availableGamesRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { user } = useUser();
+  const auth = useAuth();
 
+  const handleLogout = async () => {
+    await signOut(auth);
+    toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
+  };
 
   const handleScrollToGames = () => {
     availableGamesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const openRequestFlow = (gameName = '') => {
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to request a game.',
+        variant: 'destructive'
+      });
+      return;
+    }
     setSelectedGame(gameName);
     setIsPaymentDialogOpen(true);
   };
@@ -67,7 +84,14 @@ export function MainContent() {
         isOpen={isPaymentFormOpen}
         onClose={handlePaymentComplete}
       />
-      <Header />
+      <Header>
+        {user && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-primary-foreground">Welcome, {user.displayName || user.email}</span>
+            <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
+          </div>
+        )}
+      </Header>
       <div className="flex flex-col min-h-screen">
         <main className="flex-grow container mx-auto px-4">
           <HeroSection onRequestClick={() => openRequestFlow()} onAvailableClick={handleScrollToGames} />

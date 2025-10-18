@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { placeHolderImages } from '@/lib/placeholder-images';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'RAFA Project Launcher',
@@ -23,6 +24,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
+        <FirebaseClientProvider>
           {bgImage && (
             <div 
               className="fixed inset-0 z-[-2] bg-cover bg-center animate-ken-burns" 
@@ -33,6 +35,7 @@ export default function RootLayout({
           <div className="fixed inset-0 z-[-1] bg-background/70 backdrop-blur-sm" />
           {children}
           <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
