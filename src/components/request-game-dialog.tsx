@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { sendGameRequest, type FormState } from '@/app/actions';
@@ -25,7 +24,6 @@ const requestSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   gameName: z.string().min(2, "Game name is required."),
-  platform: z.string().min(1, "Please select a platform."),
   notes: z.string().optional(),
 });
 
@@ -43,7 +41,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName }: RequestGameDi
       name: '',
       email: '',
       gameName: gameName || '',
-      platform: '',
       notes: '',
     },
   });
@@ -55,7 +52,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName }: RequestGameDi
         name: '',
         email: '',
         gameName: gameName || '',
-        platform: '',
         notes: '',
       });
     }
@@ -136,27 +132,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName }: RequestGameDi
                     <Input placeholder="e.g., Elden Ring" {...field} />
                   </FormControl>
                   <FormMessage>{state.errors?.gameName}</FormMessage>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="platform"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Platform</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a platform" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PC">PC</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage>{state.errors?.platform}</FormMessage>
                 </FormItem>
               )}
             />

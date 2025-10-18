@@ -6,7 +6,6 @@ const requestSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   gameName: z.string().min(1, "Game name is required"),
-  platform: z.string().min(1, "Platform is required"),
   notes: z.string().optional(),
 });
 
@@ -35,7 +34,7 @@ export async function sendGameRequest(prevState: FormState, formData: FormData):
     };
   }
 
-  const { name, email, gameName, platform, notes } = validatedFields.data;
+  const { name, email, gameName, notes } = validatedFields.data;
 
   try {
     // This is a placeholder for the email sending logic (e.g., using Nodemailer or Resend)
@@ -44,7 +43,7 @@ export async function sendGameRequest(prevState: FormState, formData: FormData):
     console.log('To: rafaproject06@gmail.com');
     console.log(`From: ${name} <${email}>`);
     console.log(`Game: ${gameName}`);
-    console.log(`Platform: ${platform}`);
+    console.log('Platform: PC'); // Always PC
     console.log(`Notes: ${notes || 'N/A'}`);
     console.log('------------------------');
 
