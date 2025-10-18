@@ -47,6 +47,24 @@
       "description": "FC 26 Is Now Available Announcement Image",
       "imageUrl": "https://static.wixstatic.com/media/a827d0_6e20907f3d6640d8bcb5320b54972418~mv2.png",
       "imageHint": "soccer player"
+    },
+    {
+      "id": "rockstar_logo",
+      "description": "Rockstar Games Logo",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_08d4a624513a447ea8329622d2569567~mv2.png",
+      "imageHint": "company logo"
+    },
+    {
+      "id": "ubisoft_logo",
+      "description": "Ubisoft Logo",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_7f9c2643a6d945f492a5d15a4b413243~mv2.png",
+      "imageHint": "company logo"
+    },
+    {
+      "id": "ea_logo",
+      "description": "EA Logo",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_438b4aa2653243d5828a2b918d098e9b~mv2.png",
+      "imageHint": "company logo"
     }
   ]
 }
