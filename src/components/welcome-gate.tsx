@@ -6,8 +6,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { placeHolderImages } from '@/lib/placeholder-images';
-import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
 
 const welcomeSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -21,7 +20,6 @@ interface WelcomeGateProps {
 }
 
 export function WelcomeGate({ onLogin }: WelcomeGateProps) {
-  const logo = placeHolderImages.find(p => p.id === 'logo');
   const form = useForm<WelcomeFormValues>({
     resolver: zodResolver(welcomeSchema),
     defaultValues: { name: "", email: "" },
@@ -35,22 +33,9 @@ export function WelcomeGate({ onLogin }: WelcomeGateProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl bg-black/30 backdrop-blur-xl border border-primary/30 shadow-2xl shadow-primary/20">
         <div className="p-8 md:p-12 space-y-6">
-          <div className="flex justify-center">
-            {logo && (
-              <Image
-                src={logo.imageUrl}
-                alt="RAFA PROJECT Logo"
-                width={150}
-                height={75}
-                priority
-                className="h-auto"
-                data-ai-hint={logo.imageHint}
-              />
-            )}
-          </div>
           <div className="text-center">
-            <h1 className="font-headline text-2xl font-bold tracking-wider text-shadow-glow">ACCESS PLATFORM</h1>
-            <p className="text-muted-foreground mt-2">Enter your details to continue</p>
+            <h1 className="font-headline text-3xl font-bold tracking-wider uppercase text-shadow-glow">WELCOME TO RAFA PROJECT</h1>
+            <p className="text-muted-foreground mt-2">Please enter your details to continue to the gaming experience</p>
           </div>
 
           <Form {...form}>
@@ -60,10 +45,10 @@ export function WelcomeGate({ onLogin }: WelcomeGateProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-primary-foreground/80">Full Name</FormLabel>
+                    <FormLabel className="text-primary-foreground/80">Your Name</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Your Name" 
+                        placeholder="Enter your full name" 
                         {...field} 
                         className="bg-input/50 border-primary/50 focus:ring-primary/80"
                       />
@@ -81,7 +66,7 @@ export function WelcomeGate({ onLogin }: WelcomeGateProps) {
                     <FormControl>
                       <Input 
                         type="email"
-                        placeholder="your@email.com" 
+                        placeholder="your.email@example.com" 
                         {...field}
                         className="bg-input/50 border-primary/50 focus:ring-primary/80"
                       />
@@ -92,13 +77,17 @@ export function WelcomeGate({ onLogin }: WelcomeGateProps) {
               />
               <Button 
                 type="submit" 
-                className="w-full font-bold tracking-wider uppercase shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/50 hover:scale-105"
+                className="w-full font-bold tracking-wider uppercase bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/50 hover:scale-105"
                 disabled={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? 'Entering...' : 'Enter'}
+                {form.formState.isSubmitting ? 'Entering...' : 'Enter Gaming Zone'}
+                {!form.formState.isSubmitting && <ArrowRight className="ml-2 h-5 w-5" />}
               </Button>
             </form>
           </Form>
+           <p className="text-center text-xs text-muted-foreground">
+            Your information helps us provide a personalized gaming experience
+          </p>
         </div>
       </div>
     </div>
