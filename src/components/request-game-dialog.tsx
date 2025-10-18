@@ -18,6 +18,7 @@ interface RequestGameDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   gameName?: string;
+  onSuccess: () => void;
 }
 
 const requestSchema = z.object({
@@ -29,7 +30,7 @@ const requestSchema = z.object({
 
 type RequestFormValues = z.infer<typeof requestSchema>;
 
-export function RequestGameDialog({ isOpen, setIsOpen, gameName }: RequestGameDialogProps) {
+export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: RequestGameDialogProps) {
   const { toast } = useToast();
   
   const initialState: FormState = { message: '', success: false };
@@ -46,7 +47,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName }: RequestGameDi
   });
 
   useEffect(() => {
-    // When the dialog is opened with a specific game, reset the form with that game's name
     if (isOpen) {
       form.reset({
         name: '',
@@ -59,11 +59,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName }: RequestGameDi
 
   useEffect(() => {
     if (state.success) {
-      toast({
-        title: "Request Sent!",
-        description: state.message,
-      });
-      setIsOpen(false);
+      onSuccess(); // Call the onSuccess callback instead of showing toast directly
       form.reset();
     } else if (state.message && (state.errors || !state.success)) {
        toast({
@@ -72,7 +68,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName }: RequestGameDi
         variant: "destructive",
       });
     }
-  }, [state, toast, setIsOpen, form]);
+  }, [state, toast, form, onSuccess]);
   
   const isSubmitting = form.formState.isSubmitting;
 

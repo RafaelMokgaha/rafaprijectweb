@@ -11,12 +11,17 @@ import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
 import { PaymentConfirmationDialog } from '@/components/payment-confirmation-dialog';
+import { PaymentFormDialog } from '@/components/payment-form-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export function MainContent() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState('');
   const availableGamesRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
 
   const handleScrollToGames = () => {
     availableGamesRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -32,6 +37,19 @@ export function MainContent() {
     setIsRequestDialogOpen(true);
   };
 
+  const handleRequestSuccess = () => {
+    setIsRequestDialogOpen(false);
+    setIsPaymentFormOpen(true);
+  };
+
+  const handlePaymentComplete = () => {
+    setIsPaymentFormOpen(false);
+    toast({
+      title: "Payment Successful!",
+      description: "Your request has been received and payment is confirmed.",
+    });
+  }
+
   return (
     <>
       <PaymentConfirmationDialog
@@ -43,6 +61,11 @@ export function MainContent() {
         isOpen={isRequestDialogOpen}
         setIsOpen={setIsRequestDialogOpen}
         gameName={selectedGame}
+        onSuccess={handleRequestSuccess}
+      />
+      <PaymentFormDialog
+        isOpen={isPaymentFormOpen}
+        onClose={handlePaymentComplete}
       />
       <Header />
       <div className="flex flex-col min-h-screen">
