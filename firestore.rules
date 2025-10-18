@@ -1,89 +1,80 @@
 /**
- * @fileoverview Firestore Security Rules for RAFA Project Launcher.
+ * @fileOverview Firestore Security Rules for RAFA Project Launcher.
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for user profiles and their associated game requests.
- * Available games are publicly readable but not writable by clients.
+ * Available games are publicly readable but only writable by authorized users (not implemented in this prototype).
  *
  * Data Structure:
- * - /users/{userId}: Stores user profile information. 'userId' must match the Firebase Authentication UID.
- * - /users/{userId}/game_requests/{gameRequestId}: Stores game requests submitted by users. 'userId' must match the user who created the request.
- * - /available_games/{availableGameId}: Stores information about available games. Publicly readable.
+ * - /users/{userId}: Stores user profile information. The `userId` must match the Firebase Authentication UID.
+ * - /users/{userId}/game_requests/{gameRequestId}: Stores game requests submitted by users.
+ * - /available_games/{availableGameId}: Stores information about available games.
  *
  * Key Security Decisions:
- * - Users can only read and write their own profile data.
- * - Users can only create, update, and delete their own game requests.
- * - Listing available games is permitted for all users.
- * - Game requests are stored as subcollections of users and contain a denormalized `userAccountId` field for authorization.
+ * - Users can only read/write their own profile data.
+ * - Users can only create/manage game requests associated with their profile.
+ * - Listing users is disallowed for privacy.
+ * - The schema of the data is not validated in this prototype to allow for rapid development.
  *
  * Denormalization for Authorization:
- * - The `GameRequest` entity includes a `userAccountId` field that duplicates the `userId` from the path.
- *   This denormalization enables simple, performant rules for game requests without requiring complex path traversal.
- *   The rules enforce consistency between the `userId` path parameter and the `userAccountId` field in the document.
+ * - Game requests are stored under the user's profile, and the `userId` is included in the document. This allows for direct ownership checks without additional reads.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Manages user profile information.
+     * @description Enforces ownership for user profiles. Users can only read and write their own profile data.
      * @path /users/{userId}
-     * @allow (create) Authenticated user can create their own profile if the userId matches their auth UID.
-     * @allow (get, update, delete) Authenticated user can read, update, and delete their own profile if the userId matches their auth UID.
-     * @deny (create) Authenticated user cannot create a profile with a userId that doesn't match their auth UID.
-     * @deny (get, update, delete) Authenticated user cannot read, update, or delete another user's profile.
+     * @allow (create, update, get, delete) User with UID '46TLXWLIkPdfeNL9OdDxI9Y21362' can update their own profile document.
+     * @deny (create, update, get, delete) User with UID 'OTHER_UID' cannot access user profile '46TLXWLIkPdfeNL9OdDxI9Y21362'.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
-
       allow get: if isOwner(userId);
-      allow list: if false; // Listing users is not permitted.
-      allow create: if isOwner(userId) && request.resource.data.email is string && request.resource.data.profileComplete is bool;
-      allow update: if isExistingOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Manages game requests submitted by users.
+     * @description Enforces ownership for game requests. Users can only manage game requests associated with their profile.
      * @path /users/{userId}/game_requests/{gameRequestId}
-     * @allow (create) Authenticated user can create a game request under their user profile if the userId matches their auth UID and userAccountId.
-     * @allow (get, update, delete) Authenticated user can read, update, and delete their own game requests.
-     * @deny (create) Authenticated user cannot create a game request with a userId that doesn't match their auth UID or userAccountId.
-     * @deny (get, update, delete) Authenticated user cannot read, update, or delete another user's game requests.
-     * @principle Enforces document ownership for writes and validates relational integrity.
+     * @allow (create, update, get, delete) User with UID '46TLXWLIkPdfeNL9OdDxI9Y21362' can create a game request under their user profile.
+     * @deny (create, update, get, delete) User with UID 'OTHER_UID' cannot access a game request under user profile '46TLXWLIkPdfeNL9OdDxI9Y21362'.
+     * @principle Enforces document ownership and restricts access to a user's own data tree.
      */
     match /users/{userId}/game_requests/{gameRequestId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userAccountId == userId && request.resource.data.id == gameRequestId;
-      allow update: if isExistingOwner(userId) && resource.data.userAccountId == userId && resource.data.id == request.resource.data.id;
+      allow create: if isOwner(userId) && request.resource.data.userAccountId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userAccountId == resource.data.userAccountId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Manages information about available games.
+     * @description Allows public read access to available games, but restricts write access.
      * @path /available_games/{availableGameId}
-     * @allow (get, list) Any user can read the list of available games.
-     * @deny (create, update, delete) No user can create, update, or delete available games (admin only).
-     * @principle Public read, admin-only write.
+     * @allow get, list: if true;
+     * @deny create, update, delete: if true; // TODO: Add write permissions for authorized users (e.g., admins).
+     * @principle Public read with owner-only writes (write access not yet implemented).
      */
     match /available_games/{availableGameId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create, update, delete: if false; // TODO: Add write permissions for authorized users (e.g., admins).
     }
   }
 }
