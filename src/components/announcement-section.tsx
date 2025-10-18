@@ -19,7 +19,7 @@ export function AnnouncementSection() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent flex items-center p-8 md:p-16">
           <h2 className="text-4xl sm:text-5xl md:text-7xl font-headline font-extrabold text-white uppercase text-shadow-glow">
-            FC 26<br />Is Now<br />Available
+            FC 20<br />COMING SOON
           </h2>
         </div>
       </div>
