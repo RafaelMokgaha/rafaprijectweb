@@ -30,7 +30,7 @@ interface AdminReplyDialogProps {
 const replySchema = z.object({
   subject: z.string().min(1, "Subject is required"),
   body: z.string().min(1, "Message body is required"),
-  attachment: z.instanceof(FileList).optional(),
+  attachment: z.any().optional(),
 });
 
 type ReplyFormValues = z.infer<typeof replySchema>;
@@ -194,5 +194,3 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
     </Dialog>
   );
 }
-
-    
