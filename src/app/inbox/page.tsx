@@ -122,5 +122,3 @@ export default function InboxPage() {
         </AuthGate>
     )
 }
-
-    
