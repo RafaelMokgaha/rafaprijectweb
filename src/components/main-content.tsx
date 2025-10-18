@@ -10,7 +10,6 @@ import { InstructionsSection } from '@/components/instructions-section';
 import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
-import { PublishersSection } from './publishers-section';
 
 export function MainContent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -41,7 +40,6 @@ export function MainContent() {
           <div ref={availableGamesRef} className="scroll-mt-24">
              <AvailableGames onRequestClick={openRequestDialog} />
           </div>
-          <PublishersSection />
           <TutorialSection />
           <InstructionsSection />
           <DiscordSection />
