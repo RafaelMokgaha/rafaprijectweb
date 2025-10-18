@@ -2,82 +2,94 @@
  * @fileoverview Firestore Security Rules for RAFA Project Launcher.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles and
- * game requests. Each user can only read and write their own profile data and
- * game requests. Available games are publicly readable, but write access is
- * disallowed.
+ * This ruleset enforces a strict user-ownership model for user profiles and game requests.
+ * Only the authenticated user can read or write their own profile and game requests.
+ * Available games are publicly readable but only writeable through backend processes (not covered by these rules).
  *
  * Data Structure:
- * - /users/{userId}: Stores user profile information.
- * - /users/{userId}/game_requests/{gameRequestId}: Stores game requests submitted by users.
+ * - /users/{userId}: Stores user profile information, where userId matches the Firebase Authentication UID.
+ * - /users/{userId}/game_requests/{gameRequestId}: Stores game requests submitted by users, nested under the user's profile.
  * - /available_games/{availableGameId}: Stores information about available games.
  *
  * Key Security Decisions:
- * - Users can only read/write their own profile.
- * - Users can only create game requests for their own profile.
+ * - Users can only access their own profile data and game requests.
+ * - Listing all users is disallowed.
  * - Available games are publicly readable but not writable via client.
  *
  * Denormalization for Authorization:
- * The game requests include the userAccountId to perform the security checks.
+ * - Game requests are stored as subcollections of user profiles, inheriting the user ID for simplified authorization.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows users to read and write their own profile information.
+     * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (get, create, update, delete) User with UID '46TLXWLIkPdfeNL9OdDxI9Y21362' can access /users/46TLXWLIkPdfeNL9OdDxI9Y21362.
-     * @deny (get, create, update, delete) User with UID 'OTHER_UID' cannot access /users/46TLXWLIkPdfeNL9OdDxI9Y21362.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create, update, get, delete) if the request is made by the user with matching {userId}.
+     * @deny (create, update, get, delete) if the request is made by a different user or unauthenticated user.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null && resource.data != null;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to create, read, update and delete game requests under their own profile.
+     * @description Controls access to game requests for a specific user.
      * @path /users/{userId}/game_requests/{gameRequestId}
-     * @allow (create) User with UID '46TLXWLIkPdfeNL9OdDxI9Y21362' can create a game request under /users/46TLXWLIkPdfeNL9OdDxI9Y21362/game_requests/game123.
-     * @allow (get, update, delete) User with UID '46TLXWLIkPdfeNL9OdDxI9Y21362' can get, update or delete a game request under /users/46TLXWLIkPdfeNL9OdDxI9Y21362/game_requests/game123.
-     * @deny (create) User with UID 'OTHER_UID' cannot create a game request under /users/46TLXWLIkPdfeNL9OdDxI9Y21362/game_requests/game123.
-     * @deny (get, update, delete) User with UID 'OTHER_UID' cannot get, update or delete a game request under /users/46TLXWLIkPdfeNL9OdDxI9Y21362/game_requests/game123.
-     * @principle Enforces user-ownership for game requests; validates parent-child relational integrity.
+     * @allow (create, update, get, delete) if the request is made by the user with matching {userId}.
+     * @deny (create, update, get, delete) if the request is made by a different user or unauthenticated user.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/game_requests/{gameRequestId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null && resource.data != null;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false; // Listing game requests is not permitted
+
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Allows anyone to read available games, but prevents any writes.
+     * @description Controls access to available game documents.  Read access is public, but writes are not permitted via the client.
      * @path /available_games/{availableGameId}
-     * @allow (get, list) Any user can read available games.
-     * @deny (create, update, delete) No user can create, update, or delete available games.
-     * @principle Public read access, owner-only writes (none defined in this ruleset).
+     * @allow (get, list) to anyone.
+     * @deny (create, update, delete) to everyone.
+     * @principle Public read, owner-only write (backend only).
      */
     match /available_games/{availableGameId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
       allow create, update, delete: if false;
-    }
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
     }
   }
 }
