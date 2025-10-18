@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { collection } from 'firebase/firestore';
-import { useCollection, useFirestore, useUser, useAuth } from '@/firebase';
+import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ function AdminDashboard() {
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<GameRequest | null>(null);
 
-  const gameRequestsQuery = useMemo(() => {
+  const gameRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, 'game_requests');
   }, [firestore]);

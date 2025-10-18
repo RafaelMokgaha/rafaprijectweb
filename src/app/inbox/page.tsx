@@ -1,8 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { useCollection, useFirestore, useUser, useAuth } from '@/firebase';
+import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
@@ -33,7 +32,7 @@ function Inbox() {
   const auth = useAuth();
   const { toast } = useToast();
 
-  const messagesQuery = useMemo(() => {
+  const messagesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, `users/${user.uid}/messages`), orderBy('sentAt', 'desc'));
   }, [firestore, user]);
