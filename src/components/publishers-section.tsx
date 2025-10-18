@@ -11,7 +11,7 @@ const publisherLogos = [
 export function PublishersSection() {
   return (
     <SectionWrapper>
-      <SectionTitle>Featured Publishers</SectionTitle>
+      <SectionTitle>THIS FEATURE COMING SOON</SectionTitle>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 items-center justify-items-center">
         {publisherLogos.map((logo) => {
           const image = placeHolderImages.find((p) => p.id === logo.id);
