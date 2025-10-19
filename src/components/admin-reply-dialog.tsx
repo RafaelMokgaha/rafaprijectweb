@@ -78,25 +78,20 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
       gameRequestId: request.id,
     };
     
-    // Non-blocking write: addDoc returns a promise but we chain .catch
     addDoc(messagesCollection, messageData)
       .then(() => {
-        // If addDoc is successful, proceed to delete the game request
         const gameRequestRef = doc(firestore, 'game_requests', request.id);
         
         return deleteDoc(gameRequestRef).catch((deleteError) => {
-          // This will catch a permissions error on the deleteDoc call
           const permissionError = new FirestorePermissionError({
             path: gameRequestRef.path,
             operation: 'delete',
           });
           errorEmitter.emit('permission-error', permissionError);
-          // Re-throw to prevent the success toast from showing
           throw permissionError; 
         });
       })
       .then(() => {
-        // This runs only if both addDoc and deleteDoc were successful
         toast({
           title: "Message Sent & Request Removed!",
           description: `Your reply has been sent and the request for "${request.gameName}" has been removed.`,
@@ -105,7 +100,6 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
         form.reset();
       })
       .catch((error) => {
-        // This will catch a permissions error on the addDoc call, or a thrown error from deleteDoc's catch
         if (!(error instanceof FirestorePermissionError)) {
           const permissionError = new FirestorePermissionError({
             path: messagesCollection.path,
@@ -114,10 +108,8 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
           });
           errorEmitter.emit('permission-error', permissionError);
         }
-        // We don't show a toast here because the global error listener will show the overlay.
       })
       .finally(() => {
-        // This will run regardless of success or failure
         setIsSubmitting(false);
       });
   };
