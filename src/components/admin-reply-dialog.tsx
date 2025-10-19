@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, deleteDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -73,6 +73,7 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
     setIsSubmitting(true);
 
     const messagesCollection = collection(firestore, `users/${request.userId}/messages`);
+    const gameRequestRef = doc(firestore, 'game_requests', request.id);
 
     const messageData = {
       receiverId: request.userId,
@@ -85,25 +86,37 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
 
     addDoc(messagesCollection, messageData)
       .then(() => {
+        // After successfully sending the message, delete the game request
+        return deleteDoc(gameRequestRef).catch((deleteError) => {
+          // This will catch a permissions error on the deleteDoc call
+          const permissionError = new FirestorePermissionError({
+            path: gameRequestRef.path,
+            operation: 'delete',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          // Re-throw to be caught by the outer catch block
+          throw permissionError;
+        });
+      })
+      .then(() => {
         onSuccess();
         form.reset();
       })
       .catch((error) => {
-        console.error("Error sending message: ", error);
-        
-        // This is the important part: we create and emit a detailed error
-        // for our listener to catch and display.
-        const permissionError = new FirestorePermissionError({
-          path: messagesCollection.path,
-          operation: 'create',
-          requestResourceData: messageData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        // If the error is not already one of our detailed permission errors, create one.
+        if (!(error instanceof FirestorePermissionError)) {
+          const permissionError = new FirestorePermissionError({
+            path: messagesCollection.path,
+            operation: 'create',
+            requestResourceData: messageData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        }
 
-        // We also show a toast to the user, as a fallback.
+        // Show a generic toast to the user
         toast({
-            title: "Error Sending Reply",
-            description: "You do not have permission to send this message. Please check the security rules.",
+            title: "Error",
+            description: "You do not have permission to perform this action. Please check the security rules.",
             variant: "destructive",
         });
       })
@@ -119,7 +132,7 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl text-shadow-glow">Reply to {request.name}</DialogTitle>
           <DialogDescription>
-            Your message will be sent to the user's in-app inbox.
+            Your message will be sent to the user's in-app inbox. The request will be removed from your dashboard after replying.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -140,7 +153,7 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
 
             <Button type="submit" className="w-full font-bold tracking-wider uppercase" disabled={isSubmitting}>
                {isSubmitting && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? 'Sending...' : 'Send Message'}
+              {isSubmitting ? 'Sending...' : 'Send and Remove Request'}
             </Button>
           </form>
         </Form>
