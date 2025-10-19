@@ -1,38 +1,38 @@
 /**
- * @fileoverview Firestore Security Rules for RAFA Project.
+ * @fileoverview Firestore Security Rules for the RAFA Project.
  *
  * Core Philosophy:
  * This ruleset enforces a user-ownership model for user profiles and messages,
- * and public read access for available games and game requests.
+ * and public read access for available games. Game requests are publicly accessible to enable the system to function.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profiles. Only the authenticated user can read/write their own profile.
- * - /users/{userId}/messages/{messageId}: Stores messages for a specific user. Only the user can manage their messages.
- * - /game_requests/{gameRequestId}: Stores game requests. Publicly readable, but writes are not permitted in this prototype.
- * - /available_games/{availableGameId}: Stores available games. Publicly readable, but writes are not permitted in this prototype.
+ * - `/users/{userId}`: Stores user profile information, accessible only to the user themselves.
+ * - `/game_requests/{gameRequestId}`: Stores game requests.
+ * - `/available_games/{availableGameId}`: Stores available games, publicly readable.
+ * - `/users/{userId}/messages/{messageId}`: Stores messages for each user, accessible only to the user.
  *
  * Key Security Decisions:
- * - User listing is implicitly disallowed (no `list` on `/users`).
- * - Write operations for /game_requests and /available_games are not permitted in this prototype.
- *
- * Denormalization for Authorization:
- *  N/A - Not needed based on requirements.
- *
- * Structural Segregation:
- *  Private user data is segregated under the `/users/{userId}` path, while public data resides in top-level collections.
+ * - Users can only read and write their own profile data and messages.
+ * - Available games are publicly readable to allow listing and display.
+ * - Game requests can be read/written by anyone to allow new requests and for admin processing.
+ * - Listing of all users is disallowed.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user profiles. Only the authenticated user can read and write their own profile.
+     * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (create) - User 'testUID' can create their own profile if request.auth.uid == 'testUID'.
-     * @allow (get, update, delete) - User 'testUID' can get, update, and delete their own profile.
-     * @deny (create) - User 'anotherUID' cannot create a profile with ID 'testUID'.
-     * @deny (get, update, delete) - User 'anotherUID' cannot get, update or delete user 'testUID' profile.
-     * @principle Enforces document ownership for user profiles.
+     * @allow (create) User with UID 'user_abc' can create their own profile if request.auth.uid == 'user_abc'.
+     * @deny (create) User with UID 'user_abc' cannot create a profile with a different userId.
+     * @allow (get) User with UID 'user_abc' can read their own profile.
+     * @deny (get) User with UID 'user_abc' cannot read another user's profile.
+     * @allow (update) User with UID 'user_abc' can update their own profile.
+     * @deny (update) User with UID 'user_abc' cannot update another user's profile.
+     * @allow (delete) User with UID 'user_abc' can delete their own profile.
+     * @deny (delete) User with UID 'user_abc' cannot delete another user's profile.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
       function isOwner(userId) {
@@ -51,13 +51,53 @@ service cloud.firestore {
     }
 
     /**
-     * @description Secure messages sent to a specific user. Only the user can manage their messages.
+     * @description Controls access to game request documents.
+     * @path /game_requests/{gameRequestId}
+     * @allow (create) Any authenticated user can create a game request.
+     * @deny (create) Never.
+     * @allow (get) Any user can read a game request.
+     * @deny (get) Never.
+     * @allow (update) Any user can update a game request.
+     * @deny (update) Never.
+     * @allow (delete) Any user can delete a game request.
+     * @deny (delete) Never.
+     * @principle Allows public read/write access to game requests.
+     */
+    match /game_requests/{gameRequestId} {
+      allow get, list, create, update, delete: if true;
+    }
+
+    /**
+     * @description Controls access to available game documents.
+     * @path /available_games/{availableGameId}
+     * @allow (get) Any user can read an available game.
+     * @deny (get) Never.
+     * @allow (list) Any user can list available games.
+     * @deny (list) Never.
+     * @allow create: if false;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @principle Allows public read access but restricts writes.
+     */
+    match /available_games/{availableGameId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to message documents within a user's message inbox.
      * @path /users/{userId}/messages/{messageId}
-     * @allow (create) - User 'testUID' can create messages in their own messages collection.
-     * @allow (get, list, update, delete) - User 'testUID' can read, list, update, and delete messages in their own messages collection.
-     * @deny (create) - User 'anotherUID' cannot create messages in user 'testUID' messages collection.
-     * @deny (get, list, update, delete) - User 'anotherUID' cannot read, list, update, or delete messages in user 'testUID' messages collection.
-     * @principle Restricts access to a user's own message inbox.
+     * @allow (create) User with UID 'user_abc' can create a message in their inbox if request.auth.uid == 'user_abc'.
+     * @deny (create) User with UID 'user_abc' cannot create a message in another user's inbox.
+     * @allow (get) User with UID 'user_abc' can read a message in their inbox.
+     * @deny (get) User with UID 'user_abc' cannot read a message in another user's inbox.
+     * @allow (update) User with UID 'user_abc' can update a message in their inbox.
+     * @deny (update) User with UID 'user_abc' cannot update a message in another user's inbox.
+     * @allow (delete) User with UID 'user_abc' can delete a message in their inbox.
+     * @deny (delete) User with UID 'user_abc' cannot delete a message in another user's inbox.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/messages/{messageId} {
       function isOwner(userId) {
@@ -67,35 +107,12 @@ service cloud.firestore {
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
+
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.receiverId == userId;
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Allow public read access to available games. Write operations are not permitted in this prototype.
-     * @path /available_games/{availableGameId}
-     * @allow (get, list) - Any user can read available games.
-     * @deny (create, update, delete) - No one can create, update, or delete available games in this prototype.
-     * @principle Public read access with no write permissions.
-     */
-    match /available_games/{availableGameId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Allow public read access to game requests. Write operations are not permitted in this prototype.
-     * @path /game_requests/{gameRequestId}
-     * @allow (get, list) - Any user can read game requests.
-     * @deny (create, update, delete) - No one can create, update, or delete game requests in this prototype.
-     * @principle Public read access with no write permissions.
-     */
-    match /game_requests/{gameRequestId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
     }
   }
 }

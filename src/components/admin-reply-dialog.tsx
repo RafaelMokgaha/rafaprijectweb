@@ -45,7 +45,7 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
   const form = useForm<ReplyFormValues>({
     resolver: zodResolver(replySchema),
     defaultValues: {
-      body: `Hi ${request.name},\n\nRegarding your request for ${request.gameName}...\n\n`,
+      body: ``,
     },
   });
 
@@ -83,35 +83,33 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
       gameRequestId: request.id,
     };
 
-    try {
-      await addDoc(messagesCollection, messageData)
-        .catch((error) => {
-            if (!(error instanceof FirestorePermissionError)) {
-                const permissionError = new FirestorePermissionError({
-                    path: messagesCollection.path,
-                    operation: 'create',
-                    requestResourceData: messageData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-                throw permissionError; 
-            }
-            throw error; 
+    addDoc(messagesCollection, messageData)
+      .then(() => {
+        onSuccess();
+        form.reset();
+      })
+      .catch((error) => {
+        console.error("Error sending message: ", error);
+        
+        // This is the important part: we create and emit a detailed error
+        // for our listener to catch and display.
+        const permissionError = new FirestorePermissionError({
+          path: messagesCollection.path,
+          operation: 'create',
+          requestResourceData: messageData,
         });
-      
-      onSuccess();
-      form.reset();
+        errorEmitter.emit('permission-error', permissionError);
 
-    } catch (error: any) {
-       if (!(error.name === 'FirebaseError' && error.message.includes('permission'))) {
-            toast({
-                title: "An Unexpected Error Occurred",
-                description: "Failed to send reply. Please check the console and try again.",
-                variant: "destructive",
-            });
-       }
-    } finally {
-      setIsSubmitting(false);
-    }
+        // We also show a toast to the user, as a fallback.
+        toast({
+            title: "Error Sending Reply",
+            description: "You do not have permission to send this message. Please check the security rules.",
+            variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
 
