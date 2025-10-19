@@ -12,7 +12,7 @@ export function DiscordSection() {
           Join the official Rafa Project server for support, announcements, and community chat. Open a ticket for game requests or other issues.
         </p>
         <Button size="lg" asChild className="font-bold tracking-wider uppercase text-lg bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/30 transition-all duration-300 hover:shadow-xl hover:shadow-accent/50 hover:scale-105">
-          <Link href="https://discord.gg/your-invite-code" target="_blank" rel="noopener noreferrer">
+          <Link href="https://discord.gg/yRs9r7RXbR" target="_blank" rel="noopener noreferrer">
             Join Our Discord
           </Link>
         </Button>
