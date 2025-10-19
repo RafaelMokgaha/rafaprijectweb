@@ -17,6 +17,7 @@ import { signOut } from 'firebase/auth';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
+import { AppDownloader } from './app-downloader';
 
 const ADMIN_EMAIL = 'rafaproject06@gmail.com';
 
@@ -85,6 +86,9 @@ export function MainContent() {
         {user && (
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary-foreground">Welcome, {user.displayName || user.email}</span>
+             <Button variant="outline" size="sm" asChild>
+                <Link href="/generator">Generator</Link>
+            </Button>
             <div className="relative">
                <Button variant="outline" size="sm" asChild>
                   <Link href="/inbox">Inbox</Link>
@@ -113,6 +117,7 @@ export function MainContent() {
           </div>
           <TutorialSection />
           <InstructionsSection />
+          <AppDownloader />
           <DiscordSection />
         </main>
         <Footer />
