@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,7 +38,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
   const { user } = useUser();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
@@ -109,10 +108,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       batch.set(messageRef, messageData);
       
       await batch.commit();
-
-      if (audioRef.current) {
-        audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
-      }
 
       onSuccess();
       form.reset();
@@ -213,8 +208,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
             </Button>
           </form>
         </Form>
-        {/* IMPORTANT: You need to replace this src with a URL to your own sound file. */}
-        <audio ref={audioRef} src="/placeholder-notification.mp3" preload="auto" />
       </DialogContent>
     </Dialog>
   );
