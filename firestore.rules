@@ -1,114 +1,126 @@
 /**
- * @fileoverview Firestore Security Rules for the RAFA Project Launcher application.
+ * @fileoverview Firestore Security Rules for RAFA Project Launcher.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user-specific data while allowing public read access to general application data.
+ * This ruleset enforces a strict user-ownership model for user-specific data
+ * and allows public read access for general content like available games.
  *
  * Data Structure:
- * - /game_requests/{gameRequestId}: Public collection for game requests.  Write access restricted.
- * - /available_games/{availableGameId}: Public collection of available games.  Write access restricted.
- * - /users/{userId}: User account information, owned by the user.
- * - /users/{userId}/messages/{messageId}: Messages for each user, owned by the user.
+ * - /game_requests/{gameRequestId}: Public collection for game requests.
+ * - /available_games/{availableGameId}: Public collection for available games.
+ * - /users/{userId}: User-specific data, only accessible by the user.
+ * - /users/{userId}/messages/{messageId}: Messages for a specific user, only accessible by that user.
  *
  * Key Security Decisions:
- * - Users can only create their own user document and manage their own messages.
- * - Listing of all users is forbidden.
- * - Game requests and available games are publicly readable but write-protected.
+ * - User data is strictly controlled by the user's authentication ID.
+ * - Public read access for available games and game requests to allow listing without authentication.
+ * - No listing of users is allowed.
  *
  * Denormalization for Authorization:
- * - User messages are stored in a subcollection of the user's document, enabling path-based ownership checks.
+ * - User messages are stored as subcollections under the user's document
+ *   (/users/{userId}/messages/{messageId}) to simplify authorization using
+ *   path-based rules. The `receiverId` is denormalized onto the message to
+ *   allow efficient checking of message ownership.
+ *
+ * Structural Segregation:
+ * - Private user data is stored under /users/{userId}, while public data
+ *   is stored in top-level collections. This separation simplifies access
+ *   control and improves query performance.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows read-only access to game requests, with restricted write access.
+     * @description Checks if the user is signed in.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Authentication required for protected resources.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Enforces user-based ownership.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID and the document exists.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Enforces user-based ownership and document existence for destructive operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+   /**
+     * @description Defines access rules for the game_requests collection.
      * @path /game_requests/{gameRequestId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read, restricted write.
+     * @allow get, list: Public access to read game requests.
+     * @allow create: Allowed with any authenticated user.
+     * @deny create: Disallowed if user is not signed in
+     * @allow update, delete: Never allowed from client-side.
+     * @principle Public read access, owner-only writes.
      */
     match /game_requests/{gameRequestId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     /**
-     * @description Allows read-only access to available games, with restricted write access.
+     * @description Defines access rules for the available_games collection.
      * @path /available_games/{availableGameId}
-     * @allow get, list: if true;
-     * @deny create: if false;
-     * @deny update: if false;
-     * @deny delete: if false;
-     * @principle Public read, restricted write.
+     * @allow get, list: Public access to read available games.
+     * @allow create, update, delete: Never allowed from client-side.
+     * @principle Public read access, no writes allowed.
      */
     match /available_games/{availableGameId} {
       allow get, list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Manages user account information, enforcing user-ownership.
+     * @description Defines access rules for the users collection.
      * @path /users/{userId}
-     * @allow create: if isSignedIn() && isOwner(userId);
-     * @allow get: if isOwner(userId);
-     * @allow list: if false;
-     * @allow update: if isExistingOwner(userId);
-     * @allow delete: if isExistingOwner(userId);
-     * @deny create: if !isSignedIn() || !isOwner(userId);
-     * @deny get: if !isOwner(userId);
-     * @deny update: if !isExistingOwner(userId);
-     * @deny delete: if !isExistingOwner(userId);
-     * @principle Enforces document ownership for writes, restricts listing, and validates relational integrity.
+     * @allow get: Allowed if the user is the owner.
+     * @allow create: Allowed if the user ID matches the authenticated user ID (self-creation).
+     * @allow update: Allowed if the user is the owner and the userId field is not changed.
+     * @allow delete: Allowed if the user is the owner.
+     * @allow list: Never allowed.
+     * @principle User-based ownership, self-creation, no listing.
      */
     match /users/{userId} {
-      allow create: if isSignedIn() && isOwner(userId);
       allow get: if isOwner(userId);
       allow list: if false;
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Manages messages for each user, enforcing user-ownership through path-based rules.
+     * @description Defines access rules for the messages subcollection under each user.
      * @path /users/{userId}/messages/{messageId}
-     * @allow create: if isSignedIn() && isOwner(userId);
-     * @allow get: if isOwner(userId);
-     * @allow list: if isOwner(userId);
-     * @allow update: if isExistingOwner(userId);
-     * @allow delete: if isExistingOwner(userId);
-     * @deny create: if !isSignedIn() || !isOwner(userId);
-     * @deny get: if !isOwner(userId);
-     * @deny update: if !isExistingOwner(userId);
-     * @deny delete: if !isExistingOwner(userId);
-     * @principle Enforces document ownership for writes, restricts listing, and validates relational integrity.
+     * @allow get, list: Allowed if the user is the owner (path-based ownership).
+     * @allow create: Allowed if the user is the owner (path-based ownership), and receiverId matches the user id.
+     * @allow update, delete: Allowed if the user is the owner (path-based ownership).
+     * @principle User-based ownership, path-based authorization.
      */
     match /users/{userId}/messages/{messageId} {
-      allow create: if isSignedIn() && isOwner(userId);
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.receiverId == userId;
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
-  }
-
-  // Helper functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-
-    function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
   }
 }
