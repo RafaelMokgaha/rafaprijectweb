@@ -23,7 +23,8 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https'
+        ,
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
@@ -37,14 +38,8 @@ const nextConfig: NextConfig = {
     ],
   },
    // This will make the standalone HTML page work
-  async rewrites() {
-    return [
-      {
-        source: '/',
-        destination: '/index.html',
-      },
-    ]
-  },
+  output: 'export',
+  trailingSlash: true,
 };
 
 export default nextConfig;

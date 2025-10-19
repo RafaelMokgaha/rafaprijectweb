@@ -13,6 +13,7 @@
       --glass: rgba(255,255,255,0.03);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
+    /* Ensure this page takes full screen, overriding default Next.js body styles */
     html, body {
       height: 100%;
       width: 100%;
@@ -29,6 +30,7 @@
       justify-content:center;
     }
     
+    /* Reset padding for the body inside this specific context */
     body {
       padding: 40px;
     }
@@ -46,6 +48,7 @@
       gap:0;
     }
 
+    /* Left main */
     .main{
       padding:36px;
       min-height:320px;
@@ -110,6 +113,7 @@
       cursor:pointer;
     }
 
+    /* Right sidebar */
     .sidebar{
       padding:28px;
       border-left:1px solid rgba(255,255,255,0.02);
@@ -126,12 +130,14 @@
     .support{font-size:13px;color:var(--muted); margin-top:18px}
     footer{font-size:12px;color:var(--muted); margin-top:22px}
 
+    /* small screens */
     @media (max-width:820px){
       body { padding: 0; }
       .container{grid-template-columns:1fr; padding:0; max-width: 100%; border-radius: 0;}
       .sidebar{border-left:none;border-top:1px solid rgba(255,255,255,0.02)}
     }
 
+    /* modal */
     .overlay{
       position:fixed;
       inset:0;
@@ -228,79 +234,78 @@
       </div>
     </div>
   </div>
+<script>
+  const submitBtn = document.getElementById('submitBtn');
+  const discordLink = document.getElementById('discordLink');
+  const openDisclaimer = document.getElementById('openDisclaimer');
+  const disclaimerOverlay = document.getElementById('disclaimerOverlay');
+  const closeDisclaimer = document.getElementById('closeDisclaimer');
+  const understoodBtn = document.getElementById('understood');
+  const disclaimerLink = document.getElementById('disclaimerLink');
+  const gameOverlay = document.getElementById('gameOverlay');
+  const gameOk = document.getElementById('gameOk');
 
-  <script>
-    const submitBtn = document.getElementById('submitBtn');
-    const discordLink = document.getElementById('discordLink');
-    const openDisclaimer = document.getElementById('openDisclaimer');
-    const disclaimerOverlay = document.getElementById('disclaimerOverlay');
-    const closeDisclaimer = document.getElementById('closeDisclaimer');
-    const understoodBtn = document.getElementById('understood');
-    const disclaimerLink = document.getElementById('disclaimerLink');
-    const gameOverlay = document.getElementById('gameOverlay');
-    const gameOk = document.getElementById('gameOk');
-
-    const showDisclaimer = () => {
-      if (disclaimerOverlay) {
-        disclaimerOverlay.classList.add('active');
-        disclaimerOverlay.setAttribute('aria-hidden', 'false');
-      }
-    };
-
-    const hideDisclaimer = () => {
-      if (disclaimerOverlay) {
-        disclaimerOverlay.classList.remove('active');
-        disclaimerOverlay.setAttribute('aria-hidden', 'true');
-      }
-    };
-
-    if (submitBtn) {
-      submitBtn.addEventListener('click', () => {
-        const inputEl = document.getElementById('input');
-        const val = inputEl ? inputEl.value.trim() : '';
-        if (!val) {
-          if (gameOverlay) {
-            gameOverlay.classList.add('active');
-            gameOverlay.setAttribute('aria-hidden', 'false');
-          }
-        } else {
-          alert('Submitted — (demo) output would be generated here.');
-        }
-      });
+  const showDisclaimer = () => {
+    if (disclaimerOverlay) {
+      disclaimerOverlay.classList.add('active');
+      disclaimerOverlay.setAttribute('aria-hidden', 'false');
     }
+  };
 
-    if (gameOk) {
-      gameOk.addEventListener('click', () => {
+  const hideDisclaimer = () => {
+    if (disclaimerOverlay) {
+      disclaimerOverlay.classList.remove('active');
+      disclaimerOverlay.setAttribute('aria-hidden', 'true');
+    }
+  };
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', () => {
+      const inputEl = document.getElementById('input');
+      const val = inputEl ? inputEl.value.trim() : '';
+      if (!val) {
         if (gameOverlay) {
-          gameOverlay.classList.remove('active');
-          gameOverlay.setAttribute('aria-hidden', 'true');
+          gameOverlay.classList.add('active');
+          gameOverlay.setAttribute('aria-hidden', 'false');
         }
-      });
-    }
-
-    if (openDisclaimer) openDisclaimer.addEventListener('click', showDisclaimer);
-    if (disclaimerLink) disclaimerLink.addEventListener('click', (e) => { e.preventDefault(); showDisclaimer(); });
-    if (closeDisclaimer) closeDisclaimer.addEventListener('click', hideDisclaimer);
-    if (understoodBtn) understoodBtn.addEventListener('click', hideDisclaimer);
-
-    if (discordLink) {
-      discordLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.open('https://discord.gg', '_blank');
-      });
-    }
-
-    const handleKeydown = (ev) => {
-      if (ev.key === 'Escape') {
-        hideDisclaimer();
-        if (gameOverlay) {
-          gameOverlay.classList.remove('active');
-          gameOverlay.setAttribute('aria-hidden', 'true');
-        }
+      } else {
+        alert('Submitted — (demo) output would be generated here.');
       }
-    };
-    
-    document.addEventListener('keydown', handleKeydown);
-  </script>
+    });
+  }
+
+  if (gameOk) {
+    gameOk.addEventListener('click', () => {
+      if (gameOverlay) {
+        gameOverlay.classList.remove('active');
+        gameOverlay.setAttribute('aria-hidden', 'true');
+      }
+    });
+  }
+
+  if (openDisclaimer) openDisclaimer.addEventListener('click', showDisclaimer);
+  if (disclaimerLink) disclaimerLink.addEventListener('click', (e) => { e.preventDefault(); showDisclaimer(); });
+  if (closeDisclaimer) closeDisclaimer.addEventListener('click', hideDisclaimer);
+  if (understoodBtn) understoodBtn.addEventListener('click', hideDisclaimer);
+
+  if (discordLink) {
+    discordLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.open('https://discord.gg', '_blank');
+    });
+  }
+
+  const handleKeydown = (ev) => {
+    if (ev.key === 'Escape') {
+      hideDisclaimer();
+      if (gameOverlay) {
+        gameOverlay.classList.remove('active');
+        gameOverlay.setAttribute('aria-hidden', 'true');
+      }
+    }
+  };
+
+  document.addEventListener('keydown', handleKeydown);
+</script>
 </body>
 </html>
