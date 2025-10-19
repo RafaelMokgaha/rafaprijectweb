@@ -176,20 +176,6 @@ export default function LoginPage() {
                     {isLoading && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
                     Log In
                   </Button>
-                  <div className="relative w-full">
-                    <Separator />
-                    <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-card px-2 text-sm text-muted-foreground">
-                      OR
-                    </span>
-                  </div>
-                  <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
-                    {isGoogleLoading ? (
-                      <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Icons.google className="mr-2 h-4 w-4" />
-                    )}
-                    Sign in with Google
-                  </Button>
                 </CardFooter>
               </form>
             </Card>
@@ -251,5 +237,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
