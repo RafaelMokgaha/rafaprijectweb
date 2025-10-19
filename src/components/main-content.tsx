@@ -8,7 +8,6 @@ import { AnnouncementSection } from '@/components/announcement-section';
 import { AvailableGames } from '@/components/available-games';
 import { TutorialSection } from '@/components/tutorial-section';
 import { InstructionsSection } from '@/components/instructions-section';
-import { AppDownloader } from '@/components/app-downloader';
 import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
@@ -114,7 +113,6 @@ export function MainContent() {
           </div>
           <TutorialSection />
           <InstructionsSection />
-          <AppDownloader />
           <DiscordSection />
         </main>
         <Footer />
