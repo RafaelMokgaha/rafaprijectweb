@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, query, orderBy, doc, writeBatch, FirestoreError } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
@@ -21,20 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
-import { AlertTriangle, Trash2 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
+import { AlertTriangle } from 'lucide-react';
 
 interface GameRequest {
     id: string;
@@ -45,7 +32,7 @@ interface GameRequest {
     status: string;
     requestDate: any;
     notes: string;
-    messageId?: string; // Optional messageId to link request to the auto-reply
+    messageId?: string;
 }
 
 const ADMIN_EMAIL = 'rafaproject06@gmail.com';
@@ -86,48 +73,6 @@ function AdminDashboard() {
     }
   }
   
-  const handleDeleteRequest = async (request: GameRequest) => {
-    if (!firestore || !user) return;
-    
-    const batch = writeBatch(firestore);
-
-    // 1. Reference the game request to delete
-    const gameRequestRef = doc(firestore, 'game_requests', request.id);
-    batch.delete(gameRequestRef);
-
-    // 2. Reference the associated message to delete, if it exists
-    if (request.messageId) {
-        const messageRef = doc(firestore, `users/${request.userId}/messages`, request.messageId);
-        batch.delete(messageRef);
-    }
-
-    // Commit the batch and handle potential permission errors
-    batch.commit()
-      .then(() => {
-        toast({
-            title: "Request Deleted",
-            description: "The game request and associated message have been deleted.",
-        });
-      })
-      .catch((err: FirestoreError) => {
-          // This is the new error handling part.
-          const permissionError = new FirestorePermissionError({
-              path: `game_requests/${request.id} and users/${request.userId}/messages/${request.messageId}`,
-              operation: 'delete', // A batch can contain multiple ops, but 'delete' is the intent.
-          });
-          errorEmitter.emit('permission-error', permissionError);
-
-          // We still show a generic toast to the user.
-          // The detailed error is for the developer via the Next.js overlay.
-          toast({
-              title: "Error",
-              description: "Could not delete the request. Please check permissions.",
-              variant: "destructive",
-          });
-      });
-  }
-
-
   return (
     <>
       <Header>
@@ -155,7 +100,6 @@ function AdminDashboard() {
                     <TableHead>Requester</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -171,36 +115,12 @@ function AdminDashboard() {
                             </Badge>
                           </TableCell>
                           <TableCell>{formatDate(req.requestDate)}</TableCell>
-                           <TableCell>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                      <Button variant="destructive" size="sm">
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the game request
-                                        and the associated message from the user's inbox.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleDeleteRequest(req)}>
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                          </TableCell>
                         </TableRow>
                       )
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center">
+                      <TableCell colSpan={4} className="text-center">
                         No game requests yet.
                       </TableCell>
                     </TableRow>
