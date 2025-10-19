@@ -1,8 +1,8 @@
-
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth, useUser } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -34,8 +34,19 @@ export default function LoginPage() {
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+  
+  const router = useRouter();
+  const { user } = useUser();
 
   const logoImage = placeHolderImages.find(p => p.id === 'logo');
+  
+  useEffect(() => {
+    // If the user is logged in, redirect them to the home page.
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +57,7 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Welcome back!',
       });
+      // No need to redirect here, the useEffect will handle it.
     } catch (error: any) {
       toast({
         title: 'Login Failed',
@@ -69,6 +81,7 @@ export default function LoginPage() {
         title: 'Sign Up Successful',
         description: 'Your account has been created.',
       });
+       // No need to redirect here, the useEffect will handle it.
     } catch (error: any) {
       let description = "An unexpected error occurred during sign-up. Please try again.";
       if (error.code === 'auth/email-already-in-use') {
