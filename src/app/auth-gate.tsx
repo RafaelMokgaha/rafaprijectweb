@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useUser } from '@/firebase';
-import { LoginPage } from '@/app/login/page';
+import LoginPage from '@/app/login/page';
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
