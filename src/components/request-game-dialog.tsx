@@ -67,7 +67,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     setIsOpen(open);
   };
   
-  const onSubmit = async (data: RequestFormValues) => {
+  const onSubmit = (data: RequestFormValues) => {
     if (!user || !firestore) {
       toast({
         title: "Error",
@@ -103,44 +103,39 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       gameRequestId: gameRequestRef.id,
     };
 
-    try {
-      const batch = writeBatch(firestore);
-      batch.set(gameRequestRef, requestData);
-      batch.set(messageRef, messageData);
-      
-      await batch.commit();
-
-      onSuccess();
-      form.reset();
-      toast({
-        title: "Request Submitted!",
-        description: "Please check your inbox for next steps.",
-      });
-
-    } catch (error: any) {
-      // Emit contextual errors for both potential write failures
-      const gameRequestError = new FirestorePermissionError({
-        path: gameRequestRef.path,
-        operation: 'create',
-        requestResourceData: requestData,
-      });
-      errorEmitter.emit('permission-error', gameRequestError);
-      
-      const messageError = new FirestorePermissionError({
-          path: messageRef.path,
+    const batch = writeBatch(firestore);
+    batch.set(gameRequestRef, requestData);
+    batch.set(messageRef, messageData);
+    
+    batch.commit()
+      .then(() => {
+        onSuccess();
+        form.reset();
+        toast({
+          title: "Request Submitted!",
+          description: "Please check your inbox for next steps.",
+        });
+      })
+      .catch((error) => {
+        // Emit contextual errors for both potential write failures.
+        // This ensures that even if one part of the batch fails, we get detailed info.
+        const gameRequestError = new FirestorePermissionError({
+          path: gameRequestRef.path,
           operation: 'create',
-          requestResourceData: messageData,
-      });
-      errorEmitter.emit('permission-error', messageError);
-
-      toast({
-          title: "Error Submitting Request",
-          description: "There was a problem submitting your request. Please try again later.",
-          variant: "destructive",
-      });
-    } finally {
+          requestResourceData: requestData,
+        });
+        errorEmitter.emit('permission-error', gameRequestError);
+        
+        const messageError = new FirestorePermissionError({
+            path: messageRef.path,
+            operation: 'create',
+            requestResourceData: messageData,
+        });
+        errorEmitter.emit('permission-error', messageError);
+      })
+      .finally(() => {
         setIsSubmitting(false);
-    }
+      });
   };
 
 
