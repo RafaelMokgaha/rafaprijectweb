@@ -7,8 +7,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
-  GoogleAuthProvider,
-  signInWithPopup,
 } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,13 +24,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
 import { placeHolderImages } from '@/lib/placeholder-images';
-import { Separator } from '@/components/ui/separator';
 
 export default function LoginPage() {
   const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [signupName, setSignupName] = useState('');
@@ -69,10 +65,9 @@ export default function LoginPage() {
       await updateProfile(userCredential.user, {
         displayName: signupName,
       });
-      // Email verification is handled by the AuthGate now.
       toast({
         title: 'Sign Up Successful',
-        description: 'Your account has been created. Please check your email to verify your account.',
+        description: 'Your account has been created.',
       });
     } catch (error: any) {
       let description = "An unexpected error occurred during sign-up. Please try again.";
@@ -91,30 +86,6 @@ export default function LoginPage() {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-  
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome!',
-      });
-    } catch (error: any) {
-      let description = error.message || 'Could not sign in with Google.';
-      if (error.code === 'auth/operation-not-allowed') {
-        description = 'Google Sign-In is not enabled for this project. Please enable it in the Firebase console.';
-      }
-      toast({
-        title: 'Google Sign-In Failed',
-        description: description,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsGoogleLoading(false);
     }
   };
 
@@ -172,7 +143,7 @@ export default function LoginPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex-col gap-4">
-                  <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
                     Log In
                   </Button>
