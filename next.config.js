@@ -1,7 +1,5 @@
-
-import type {NextConfig} from 'next';
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -25,8 +23,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https'
-        ,
+        protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
@@ -48,9 +45,9 @@ const nextConfig: NextConfig = {
         hostname: 'img.clerk.com',
         port: '',
         pathname: '/**',
-      }
+      },
     ],
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
