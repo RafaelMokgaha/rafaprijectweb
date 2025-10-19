@@ -11,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>RAFA Project</title>
         <meta name="description" content="RAFA Project Launcher" />
@@ -21,7 +21,20 @@ export default function RootLayout({
       </head>
       <body>
         <FirebaseClientProvider>
-          {children}
+          <div className="relative min-h-screen w-full">
+            <div 
+              className="absolute inset-0 bg-no-repeat bg-cover bg-center animate-ken-burns"
+              style={{ 
+                backgroundImage: "url('https://static.wixstatic.com/media/a827d0_72c3623181a94851b929a165a68be309~mv2.png')",
+                zIndex: -2 
+              }}
+            />
+            <div 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              style={{ zIndex: -1 }}
+            />
+            {children}
+          </div>
           <Toaster />
         </FirebaseClientProvider>
       </body>
