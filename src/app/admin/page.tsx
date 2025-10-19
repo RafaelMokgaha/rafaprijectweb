@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Mail } from 'lucide-react';
 
 interface GameRequest {
     id: string;
@@ -71,6 +71,12 @@ function AdminDashboard() {
         return 'outline';
     }
   }
+  
+  const generateMailtoLink = (req: GameRequest) => {
+    const subject = encodeURIComponent(`Re: Your game request for ${req.gameName}`);
+    const body = encodeURIComponent(`Hi ${req.name},\n\nRegarding your request for ${req.gameName}...\n\n`);
+    return `mailto:${req.email}?subject=${subject}&body=${body}`;
+  };
 
   return (
     <>
@@ -101,6 +107,7 @@ function AdminDashboard() {
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Notes</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -118,12 +125,20 @@ function AdminDashboard() {
                           </TableCell>
                           <TableCell>{formatDate(req.requestDate)}</TableCell>
                           <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
+                          <TableCell className="text-right">
+                             <Button asChild size="sm">
+                                <a href={generateMailtoLink(req)}>
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Reply via Email
+                                </a>
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       )
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center">
+                      <TableCell colSpan={7} className="text-center">
                         No game requests yet.
                       </TableCell>
                     </TableRow>
