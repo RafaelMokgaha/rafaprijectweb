@@ -128,7 +128,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl text-shadow-glow">Request a Game</DialogTitle>
           <DialogDescription>
-            Fill out the form below. A ticket will be opened on Discord.
+            Fill out the form below. Make sure you have joined our Discord and use the same name as your Discord name.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
