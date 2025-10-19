@@ -97,10 +97,11 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       batch.set(gameRequestRef, requestData);
 
       const messageRef = doc(collection(firestore, `users/${user.uid}/messages`));
+      const messageBody = `Thank you for your game request for "${data.gameName}".\n\nTo complete your request and track its status, please open a ticket on our Discord server. We will be with you shortly.`;
       const messageData = {
         receiverId: user.uid,
         subject: `Your Game Request: "${data.gameName}"`,
-        body: "go to discord open ticksts",
+        body: messageBody,
         sentAt: serverTimestamp(),
         isRead: false,
         gameRequestId: gameRequestRef.id,
@@ -117,7 +118,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       form.reset();
       toast({
         title: "Request Submitted!",
-        description: "go to discord open ticksts",
+        description: "Please check your inbox for next steps.",
       });
 
     } catch (error: any) {
