@@ -13,7 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useFirestore } from '@/firebase';
-import { collection, serverTimestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, serverTimestamp, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { FirestorePermissionError, errorEmitter } from '@/firebase';
 
 interface AdminReplyDialogProps {
   isOpen: boolean;
@@ -67,44 +68,58 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
     
     setIsSubmitting(true);
 
-    try {
-      const messagesCollection = collection(firestore, `users/${request.userId}/messages`);
-      
-      const messageData = {
-        receiverId: request.userId,
-        subject: data.subject,
-        body: data.body,
-        sentAt: serverTimestamp(),
-        isRead: false,
-        gameRequestId: request.id,
-      };
-      
-      await addDoc(messagesCollection, messageData);
-
-      // Update the game request status to 'solved'
-      const gameRequestRef = doc(firestore, 'game_requests', request.id);
-      await updateDoc(gameRequestRef, {
-        status: 'solved'
+    const messagesCollection = collection(firestore, `users/${request.userId}/messages`);
+    const messageData = {
+      receiverId: request.userId,
+      subject: data.subject,
+      body: data.body,
+      sentAt: serverTimestamp(),
+      isRead: false,
+      gameRequestId: request.id,
+    };
+    
+    // Non-blocking write: addDoc returns a promise but we chain .catch
+    addDoc(messagesCollection, messageData)
+      .then(() => {
+        // If addDoc is successful, proceed to delete the game request
+        const gameRequestRef = doc(firestore, 'game_requests', request.id);
+        
+        return deleteDoc(gameRequestRef).catch((deleteError) => {
+          // This will catch a permissions error on the deleteDoc call
+          const permissionError = new FirestorePermissionError({
+            path: gameRequestRef.path,
+            operation: 'delete',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          // Re-throw to prevent the success toast from showing
+          throw permissionError; 
+        });
+      })
+      .then(() => {
+        // This runs only if both addDoc and deleteDoc were successful
+        toast({
+          title: "Message Sent & Request Removed!",
+          description: `Your reply has been sent and the request for "${request.gameName}" has been removed.`,
+        });
+        setIsOpen(false);
+        form.reset();
+      })
+      .catch((error) => {
+        // This will catch a permissions error on the addDoc call, or a thrown error from deleteDoc's catch
+        if (!(error instanceof FirestorePermissionError)) {
+          const permissionError = new FirestorePermissionError({
+            path: messagesCollection.path,
+            operation: 'create',
+            requestResourceData: messageData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        }
+        // We don't show a toast here because the global error listener will show the overlay.
+      })
+      .finally(() => {
+        // This will run regardless of success or failure
+        setIsSubmitting(false);
       });
-
-      toast({
-        title: "Message Sent & Request Solved!",
-        description: `Your reply has been sent and the status for "${request.gameName}" is now 'solved'.`,
-      });
-      
-      setIsOpen(false);
-      form.reset();
-
-    } catch (error) {
-       console.error("Error sending message or updating status: ", error);
-       toast({
-        title: "Error",
-        description: "Failed to send message or update status. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
 
@@ -150,7 +165,7 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
             <DialogFooter>
               <Button type="submit" className="w-full font-bold tracking-wider uppercase" disabled={isSubmitting}>
                 {isSubmitting && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Sending...' : 'Send Message'}
+                {isSubmitting ? 'Sending...' : 'Send Message & Remove Request'}
               </Button>
             </DialogFooter>
           </form>
