@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 interface RequestGameDialogProps {
   isOpen: boolean;
@@ -76,33 +78,41 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     
     setIsSubmitting(true);
 
-    try {
-      const gameRequestsCollection = collection(firestore, 'game_requests');
+    const gameRequestsCollection = collection(firestore, 'game_requests');
       
-      await addDoc(gameRequestsCollection, {
-        userId: user.uid,
-        name: data.name,
-        email: data.email,
-        gameName: data.gameName,
-        notes: data.notes || '',
-        platform: 'PC',
-        requestDate: serverTimestamp(),
-        status: 'pending',
-      });
-      
-      onSuccess();
-      form.reset();
+    const requestData = {
+      userId: user.uid,
+      name: data.name,
+      email: data.email,
+      gameName: data.gameName,
+      notes: data.notes || '',
+      platform: 'PC',
+      requestDate: serverTimestamp(),
+      status: 'pending',
+    };
 
-    } catch (error) {
-       console.error("Error adding document: ", error);
-       toast({
-        title: "Error",
-        description: "Failed to send request. Please try again.",
-        variant: "destructive",
+    addDoc(gameRequestsCollection, requestData)
+      .then(() => {
+        onSuccess();
+        form.reset();
+      })
+      .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+          path: gameRequestsCollection.path,
+          operation: 'create',
+          requestResourceData: requestData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+
+        toast({
+          title: "Error Submitting Request",
+          description: "You do not have permission to perform this action. Please check security rules.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
 
