@@ -1,49 +1,63 @@
-
 {
   "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the RAFA Project Launcher.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user.",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ]
+    },
     "GameRequest": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "GameRequest",
       "type": "object",
-      "description": "Represents a user's request for a game on the RAFA Project platform.",
+      "description": "Represents a request for a game on the RAFA Project Launcher.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Game Request."
+          "description": "Unique identifier for the game request.",
+          "format": "uuid"
         },
         "userId": {
           "type": "string",
-          "description": "The UID of the user who made the request."
+          "description": "Reference to the User who made the request. (Relationship: User 1:N GameRequest)"
         },
         "gameName": {
           "type": "string",
-          "description": "The name of the game requested by the user."
+          "description": "The name of the game being requested."
         },
         "platform": {
           "type": "string",
-          "description": "The platform for which the game is requested (e.g., PC, PS4/5, Xbox, Switch)."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the user submitting the request."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the user submitting the request.",
-          "format": "email"
+          "description": "The platform the game is requested for (PC, PS4/5, Xbox, Switch)."
         },
         "notes": {
           "type": "string",
-          "description": "Additional notes or comments provided by the user with the request."
+          "description": "Any additional notes or comments from the user."
         },
         "requestDate": {
           "type": "string",
-          "description": "The date and time when the game request was submitted.",
+          "description": "The date and time the request was submitted.",
           "format": "date-time"
-        },
-        "status": {
-          "type": "string",
-          "description": "The status of the request (e.g., pending, approved, denied)."
         }
       },
       "required": [
@@ -51,21 +65,19 @@
         "userId",
         "gameName",
         "platform",
-        "name",
-        "email",
-        "requestDate",
-        "status"
+        "requestDate"
       ]
     },
     "AvailableGame": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AvailableGame",
       "type": "object",
-      "description": "Represents a game available on the RAFA Project platform.",
+      "description": "Represents a game that is available on the RAFA Project Launcher.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the available game."
+          "description": "Unique identifier for the available game.",
+          "format": "uuid"
         },
         "name": {
           "type": "string",
@@ -73,14 +85,15 @@
         },
         "supportedPlatforms": {
           "type": "array",
-          "description": "A list of platforms on which the game is supported.",
+          "description": "List of platforms supported by the game.",
           "items": {
             "type": "string"
           }
         },
         "imageUrl": {
           "type": "string",
-          "description": "URL of the image representing the game."
+          "description": "URL to the image of the game.",
+          "format": "uri"
         }
       },
       "required": [
@@ -90,87 +103,53 @@
         "imageUrl"
       ]
     },
-    "User": {
+    "UserMessage": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
+      "title": "UserMessage",
       "type": "object",
-      "description": "Represents a user of the RAFA Project platform.",
+      "description": "Represents a message sent between users within the RAFA Project Launcher.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user."
+          "description": "Unique identifier for the message.",
+          "format": "uuid"
         },
-        "name": {
+        "senderId": {
           "type": "string",
-          "description": "The name of the user."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the user.",
-          "format": "email"
-        },
-        "registrationDate": {
-          "type": "string",
-          "description": "The date and time when the user registered.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "email",
-        "registrationDate"
-      ]
-    },
-    "Message": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Message",
-      "type": "object",
-      "description": "Represents a message sent from an admin to a user.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the message."
+          "description": "Reference to the User who sent the message. (Relationship: User 1:N UserMessage - Sent)"
         },
         "receiverId": {
           "type": "string",
-          "description": "The UID of the user receiving the message."
+          "description": "Reference to the User who received the message. (Relationship: User 1:N UserMessage - Received)"
         },
-        "subject": {
-          "type": "string",
-          "description": "The subject of the message."
-        },
-        "body": {
+        "messageText": {
           "type": "string",
           "description": "The content of the message."
         },
-        "sentAt": {
+        "timestamp": {
           "type": "string",
-          "description": "The date and time when the message was sent.",
+          "description": "The date and time the message was sent.",
           "format": "date-time"
         },
         "isRead": {
           "type": "boolean",
-          "description": "Whether the user has read the message."
-        },
-        "gameRequestId": {
-            "type": "string",
-            "description": "The optional ID of the game request this message is related to."
+          "description": "Indicates whether the message has been read by the receiver."
         }
       },
       "required": [
+        "id",
+        "senderId",
         "receiverId",
-        "subject",
-        "body",
-        "sentAt"
+        "messageText",
+        "timestamp",
+        "isRead"
       ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "anonymous",
-      "google.com"
+      "anonymous"
     ]
   },
   "firestore": {
@@ -182,24 +161,28 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles. Uses path-based ownership for private user data. User id is the firebase auth uid",
+          "description": "Stores user profiles.  Path-based ownership enforced via security rules.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user, corresponding to their Firebase Auth UID."
+              "description": "The unique identifier of the user."
             }
           ]
         }
       },
       {
-        "path": "/game_requests/{gameRequestId}",
+        "path": "/users/{userId}/game_requests/{gameRequestId}",
         "definition": {
           "entityName": "GameRequest",
           "schema": {
             "$ref": "#/backend/entities/GameRequest"
           },
-          "description": "Stores user game requests. Each document represents a single request.",
+          "description": "Stores game requests made by users. Path-based ownership ensures only the user can access their requests.",
           "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
             {
               "name": "gameRequestId",
               "description": "The unique identifier of the game request."
@@ -214,7 +197,7 @@
           "schema": {
             "$ref": "#/backend/entities/AvailableGame"
           },
-          "description": "Stores information about available games on the platform. Each document represents a single available game.",
+          "description": "Stores information about available games. Publicly readable, but writeable only by admins.",
           "params": [
             {
               "name": "availableGameId",
@@ -226,15 +209,15 @@
       {
         "path": "/users/{userId}/messages/{messageId}",
         "definition": {
-          "entityName": "Message",
+          "entityName": "UserMessage",
           "schema": {
-            "$ref": "#/backend/entities/Message"
+            "$ref": "#/backend/entities/UserMessage"
           },
-          "description": "Stores messages sent to a specific user. This is a sub-collection of the users collection.",
+          "description": "Stores messages sent by and to users. Path-based ownership ensures only the sender and receiver can access the message.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who owns this message inbox."
+              "description": "The unique identifier of the user who sent or received the message."
             },
             {
               "name": "messageId",
@@ -244,6 +227,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to store game requests, available games, user data and messages for the RAFA Project Launcher. It prioritizes simplicity and security. User data is stored in a private collection using path-based ownership. Messages are stored as a subcollection under each user to enforce privacy. Game requests are stored in a flat collection. Available games are stored in a separate flat collection.\n\nAuthorization Independence:\nThere is no need to denormalize any data.\n\nQAPs:\nList operations are secured by structural segregation."
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and easily debuggable, following the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). It leverages denormalization and structural segregation to simplify security rules and ensure data integrity.\n\n**Authorization Independence:**  Authorization independence is achieved primarily through structural choices. User-owned data, like `GameRequest` and `UserMessage` are stored under the `/users/{userId}` path.  This path-based ownership inherently provides authorization independence because access control can be determined directly from the path without needing to `get()` data from other collections.\n\n**Structural Segregation:** All documents within a collection share the same security requirements. For instance, `GameRequest` is stored as a subcollection of `/users/{userId}/game_requests/{gameRequestId}` to ensure only the user can access their own game requests. `AvailableGame` are stored in `/available_games/{availableGameId}` to allow any user to read it but only admins can write.\n\n**Access Modeling:**\n*   **Private Data:** `/users/{userId}/game_requests/{gameRequestId}` and `/users/{userId}/messages/{messageId}` demonstrates path-based ownership for user-specific data.\n\n**QAPs (Rules are not Filters):**\n*   The structure supports secure `list` operations because collections are segregated based on access requirements.  Listing game requests under `/users/{userId}/game_requests` only requires checking `request.auth.uid == userId`.\n\n**Invariants:**\n*   Ownership of `GameRequest` and `UserMessage` is enforced by the path and secured by rules based on `request.auth.uid`.\n"
   }
 }
