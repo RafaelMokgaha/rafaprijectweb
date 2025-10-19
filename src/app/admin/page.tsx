@@ -21,7 +21,6 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
-import { AdminReplyDialog } from '@/components/admin-reply-dialog';
 import { AlertTriangle } from 'lucide-react';
 
 interface GameRequest {
@@ -42,9 +41,6 @@ function AdminDashboard() {
   const { user } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
-  const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<GameRequest | null>(null);
-  const [repliedRequestIds, setRepliedRequestIds] = useState<string[]>([]);
 
   const gameRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -65,15 +61,6 @@ function AdminDashboard() {
     return 'Date not available';
   }
 
-  const handleReplyClick = (request: GameRequest) => {
-    setSelectedRequest(request);
-    setIsReplyDialogOpen(true);
-  }
-
-  const handleReplySent = (requestId: string) => {
-    setRepliedRequestIds(prev => [...prev, requestId]);
-  }
-
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -87,12 +74,6 @@ function AdminDashboard() {
 
   return (
     <>
-      <AdminReplyDialog
-        isOpen={isReplyDialogOpen}
-        setIsOpen={setIsReplyDialogOpen}
-        request={selectedRequest}
-        onReplySent={handleReplySent}
-      />
       <Header>
          {user && (
           <div className="flex items-center gap-4">
@@ -120,13 +101,11 @@ function AdminDashboard() {
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Notes</TableHead>
-                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {gameRequests.length > 0 ? (
                     gameRequests.map((req) => {
-                      const hasBeenReplied = repliedRequestIds.includes(req.id);
                       return (
                         <TableRow key={req.id}>
                           <TableCell className="font-medium">{req.gameName}</TableCell>
@@ -139,17 +118,12 @@ function AdminDashboard() {
                           </TableCell>
                           <TableCell>{formatDate(req.requestDate)}</TableCell>
                           <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
-                          <TableCell>
-                              <Button variant="outline" size="sm" onClick={() => handleReplyClick(req)} disabled={hasBeenReplied}>
-                                 {hasBeenReplied ? 'Replied' : 'Reply'}
-                              </Button>
-                          </TableCell>
                         </TableRow>
                       )
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center">
+                      <TableCell colSpan={6} className="text-center">
                         No game requests yet.
                       </TableCell>
                     </TableRow>
