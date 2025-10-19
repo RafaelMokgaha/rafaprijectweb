@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -43,6 +44,7 @@ function AdminDashboard() {
   const { toast } = useToast();
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<GameRequest | null>(null);
+  const [repliedRequestIds, setRepliedRequestIds] = useState<string[]>([]);
 
   const gameRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -68,6 +70,10 @@ function AdminDashboard() {
     setIsReplyDialogOpen(true);
   }
 
+  const handleReplySent = (requestId: string) => {
+    setRepliedRequestIds(prev => [...prev, requestId]);
+  }
+
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -85,6 +91,7 @@ function AdminDashboard() {
         isOpen={isReplyDialogOpen}
         setIsOpen={setIsReplyDialogOpen}
         request={selectedRequest}
+        onReplySent={handleReplySent}
       />
       <Header>
          {user && (
@@ -118,25 +125,28 @@ function AdminDashboard() {
                 </TableHeader>
                 <TableBody>
                   {gameRequests.length > 0 ? (
-                    gameRequests.map((req) => (
-                      <TableRow key={req.id}>
-                        <TableCell className="font-medium">{req.gameName}</TableCell>
-                        <TableCell>{req.name}</TableCell>
-                        <TableCell>{req.email}</TableCell>
-                        <TableCell>
-                           <Badge variant={getStatusVariant(req.status)}>
-                            {req.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatDate(req.requestDate)}</TableCell>
-                        <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
-                        <TableCell>
-                            <Button variant="outline" size="sm" onClick={() => handleReplyClick(req)} disabled={req.status.toLowerCase() === 'solved'}>
-                               {req.status.toLowerCase() === 'solved' ? 'Solved' : 'Reply'}
-                            </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    gameRequests.map((req) => {
+                      const hasBeenReplied = repliedRequestIds.includes(req.id);
+                      return (
+                        <TableRow key={req.id}>
+                          <TableCell className="font-medium">{req.gameName}</TableCell>
+                          <TableCell>{req.name}</TableCell>
+                          <TableCell>{req.email}</TableCell>
+                          <TableCell>
+                             <Badge variant={getStatusVariant(req.status)}>
+                              {req.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDate(req.requestDate)}</TableCell>
+                          <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
+                          <TableCell>
+                              <Button variant="outline" size="sm" onClick={() => handleReplyClick(req)} disabled={hasBeenReplied}>
+                                 {hasBeenReplied ? 'Replied' : 'Reply'}
+                              </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center">

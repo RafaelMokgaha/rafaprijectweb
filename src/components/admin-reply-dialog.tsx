@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useFirestore } from '@/firebase';
-import { collection, serverTimestamp, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, serverTimestamp, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { FirestorePermissionError, errorEmitter } from '@/firebase';
 
 interface AdminReplyDialogProps {
@@ -25,6 +25,7 @@ interface AdminReplyDialogProps {
     gameName: string;
     name: string;
   } | null;
+  onReplySent: (requestId: string) => void;
 }
 
 const replySchema = z.object({
@@ -34,7 +35,7 @@ const replySchema = z.object({
 
 type ReplyFormValues = z.infer<typeof replySchema>;
 
-export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialogProps) {
+export function AdminReplyDialog({ isOpen, setIsOpen, request, onReplySent }: AdminReplyDialogProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,34 +81,21 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
     
     addDoc(messagesCollection, messageData)
       .then(() => {
-        const gameRequestRef = doc(firestore, 'game_requests', request.id);
-        
-        return deleteDoc(gameRequestRef).catch((deleteError) => {
-          const permissionError = new FirestorePermissionError({
-            path: gameRequestRef.path,
-            operation: 'delete',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-          throw permissionError; 
-        });
-      })
-      .then(() => {
         toast({
-          title: "Message Sent & Request Removed!",
-          description: `Your reply has been sent and the request for "${request.gameName}" has been removed.`,
+          title: "Message Sent!",
+          description: `Your reply has been sent to ${request.name}.`,
         });
+        onReplySent(request.id);
         setIsOpen(false);
         form.reset();
       })
       .catch((error) => {
-        if (!(error instanceof FirestorePermissionError)) {
-          const permissionError = new FirestorePermissionError({
+        const permissionError = new FirestorePermissionError({
             path: messagesCollection.path,
             operation: 'create',
             requestResourceData: messageData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        }
+        });
+        errorEmitter.emit('permission-error', permissionError);
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -157,7 +145,7 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request }: AdminReplyDialo
             <DialogFooter>
               <Button type="submit" className="w-full font-bold tracking-wider uppercase" disabled={isSubmitting}>
                 {isSubmitting && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Sending...' : 'Send Message & Remove Request'}
+                {isSubmitting ? 'Sending...' : 'Send Message'}
               </Button>
             </DialogFooter>
           </form>
