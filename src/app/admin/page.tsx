@@ -22,7 +22,6 @@ import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
 import { AlertTriangle, Mail } from 'lucide-react';
-import { AdminReplyDialog } from '@/components/admin-reply-dialog';
 
 interface GameRequest {
     id: string;
@@ -42,8 +41,6 @@ function AdminDashboard() {
   const { user } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
-  const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<GameRequest | null>(null);
 
   const gameRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -75,20 +72,6 @@ function AdminDashboard() {
     }
   }
 
-  const handleReplyClick = (request: GameRequest) => {
-    setSelectedRequest(request);
-    setIsReplyDialogOpen(true);
-  };
-  
-  const handleReplySuccess = () => {
-    setIsReplyDialogOpen(false);
-    setSelectedRequest(null);
-    toast({
-      title: 'Reply Sent',
-      description: 'Your message has been sent.',
-    });
-  };
-
   return (
     <>
       <Header>
@@ -118,7 +101,6 @@ function AdminDashboard() {
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Notes</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -136,18 +118,12 @@ function AdminDashboard() {
                           </TableCell>
                           <TableCell>{formatDate(req.requestDate)}</TableCell>
                           <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
-                          <TableCell className="text-right">
-                             <Button size="sm" onClick={() => handleReplyClick(req)}>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Reply
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       )
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center">
+                      <TableCell colSpan={6} className="text-center">
                         No game requests yet.
                       </TableCell>
                     </TableRow>
@@ -158,14 +134,6 @@ function AdminDashboard() {
           )}
         </SectionWrapper>
       </main>
-      {selectedRequest && (
-        <AdminReplyDialog
-          isOpen={isReplyDialogOpen}
-          setIsOpen={setIsReplyDialogOpen}
-          request={selectedRequest}
-          onSuccess={handleReplySuccess}
-        />
-      )}
     </>
   );
 }

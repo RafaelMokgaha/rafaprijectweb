@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -10,8 +11,6 @@ import { InstructionsSection } from '@/components/instructions-section';
 import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
-import { PaymentConfirmationDialog } from '@/components/payment-confirmation-dialog';
-import { PaymentFormDialog } from '@/components/payment-form-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -22,8 +21,6 @@ const ADMIN_EMAIL = 'rafaproject06@gmail.com';
 
 export function MainContent() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState('');
   const availableGamesRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -50,43 +47,21 @@ export function MainContent() {
       return;
     }
     setSelectedGame(gameName);
-    setIsPaymentDialogOpen(true);
-  };
-
-  const handlePaymentConfirm = () => {
-    setIsPaymentDialogOpen(false);
     setIsRequestDialogOpen(true);
   };
 
   const handleRequestSuccess = () => {
     setIsRequestDialogOpen(false);
-    setIsPaymentFormOpen(true);
+    // The toast is now handled inside the RequestGameDialog
   };
-
-  const handlePaymentComplete = () => {
-    setIsPaymentFormOpen(false);
-    toast({
-      title: "Payment Successful!",
-      description: "Your request has been received and payment is confirmed.",
-    });
-  }
 
   return (
     <>
-      <PaymentConfirmationDialog
-        isOpen={isPaymentDialogOpen}
-        onCancel={() => setIsPaymentDialogOpen(false)}
-        onConfirm={handlePaymentConfirm}
-      />
       <RequestGameDialog
         isOpen={isRequestDialogOpen}
         setIsOpen={setIsRequestDialogOpen}
         gameName={selectedGame}
         onSuccess={handleRequestSuccess}
-      />
-      <PaymentFormDialog
-        isOpen={isPaymentFormOpen}
-        onClose={handlePaymentComplete}
       />
       <Header>
         {user && (

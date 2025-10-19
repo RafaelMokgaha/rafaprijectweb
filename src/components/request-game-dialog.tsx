@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -95,6 +96,10 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       .then(() => {
         onSuccess();
         form.reset();
+        toast({
+          title: "Request Submitted!",
+          description: "A ticket has been opened on Discord, and we will be with you shortly.",
+        });
       })
       .catch((error) => {
         const permissionError = new FirestorePermissionError({
