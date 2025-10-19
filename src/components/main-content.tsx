@@ -86,9 +86,6 @@ export function MainContent() {
         {user && (
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary-foreground">Welcome, {user.displayName || user.email}</span>
-             <Button variant="outline" size="sm" asChild>
-                <Link href="/generator">Generator</Link>
-            </Button>
             <div className="relative">
                <Button variant="outline" size="sm" asChild>
                   <Link href="/inbox">Inbox</Link>
