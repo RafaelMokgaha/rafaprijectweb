@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Database } from 'lucide-react';
 
 interface GameRequest {
     id: string;
@@ -87,6 +87,14 @@ function AdminDashboard() {
         )}
       </Header>
       <main className="container mx-auto px-4 py-8">
+         <div className="mb-8 flex justify-end">
+            <Button asChild>
+                <Link href="/admin/seed" className="flex items-center gap-2">
+                    <Database className="h-4 w-4" />
+                    <span>Seed Database</span>
+                </Link>
+            </Button>
+        </div>
         <SectionWrapper>
           <SectionTitle>Game Requests</SectionTitle>
           {isLoading && <p className="text-center">Loading requests...</p>}
