@@ -1,7 +1,7 @@
 
 'use client';
 
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
@@ -18,7 +18,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Badge } from '@/components/ui/badge';
-import { Paperclip } from 'lucide-react';
+import { Paperclip, Trash2 } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -52,6 +52,25 @@ function Inbox() {
       return format(timestamp.toDate(), 'PPP p');
     }
     return 'Date not available';
+  }
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!firestore || !user) return;
+    try {
+        const messageRef = doc(firestore, `users/${user.uid}/messages`, messageId);
+        await deleteDoc(messageRef);
+        toast({
+            title: "Message Deleted",
+            description: "The message has been removed from your inbox.",
+        });
+    } catch (e) {
+        console.error("Error deleting message: ", e);
+        toast({
+            title: "Error",
+            description: "Could not delete the message. Please try again.",
+            variant: "destructive",
+        });
+    }
   }
 
   return (
@@ -90,6 +109,19 @@ function Inbox() {
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4 bg-background/50 rounded-b-lg">
                                     <p className="whitespace-pre-wrap">{msg.body}</p>
+                                    <div className="flex justify-end mt-4">
+                                        <Button 
+                                            variant="destructive" 
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteMessage(msg.id);
+                                            }}
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete
+                                        </Button>
+                                    </div>
                                 </AccordionContent>
                             </AccordionItem>
                         ))}
