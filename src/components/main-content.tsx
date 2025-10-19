@@ -82,7 +82,7 @@ export function MainContent() {
         onSuccess={handleRequestSuccess}
       />
       <Header>
-        {user && (
+        {user ? (
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary-foreground">Welcome, {user.displayName || user.email}</span>
             <div className="relative">
@@ -102,6 +102,10 @@ export function MainContent() {
             )}
             <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
           </div>
+        ) : (
+           <Button variant="outline" size="sm" asChild>
+              <Link href="/login">Login</Link>
+            </Button>
         )}
       </Header>
       <div className="flex flex-col min-h-screen">
