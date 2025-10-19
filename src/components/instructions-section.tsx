@@ -57,7 +57,7 @@ export function InstructionsSection() {
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-primary-foreground">4</div>
             <div>
-              <h4 className="font-bold text-xl text-primary-foreground">🎥 Follow the Installation Tutorial</h4>
+              <h4 className="font-bold text-xl text-primary-foreground">Follow the Installation Tutorial</h4>
               <p className="text-primary-foreground/80 mt-1">
                 After downloading the game file, visit our website and watch the tutorial video located under the Tutorial section.
                 The video will guide you step-by-step on how to install and set up the game properly to avoid any errors or missing files.
