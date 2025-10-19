@@ -115,8 +115,8 @@ export function MainContent() {
           <div ref={availableGamesRef} className="scroll-mt-24">
              <AvailableGames onRequestClick={openRequestFlow} />
           </div>
-          <TutorialSection />
           <InstructionsSection />
+          <TutorialSection />
           <DiscordSection />
         </main>
         <Footer />
