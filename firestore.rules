@@ -1,162 +1,112 @@
 /**
- * @fileoverview Firestore Security Rules for RAFA Project Launcher.
+ * @fileoverview Firestore Security Rules for the RAFA Project Launcher application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles, game requests, and user messages.
- * Available games are publicly readable but only writable by admins (not implemented in this prototype).
+ * This ruleset employs a hybrid security model:
+ *   - Public Read Access: Allows open read access to certain collections (e.g., `available_games`, `game_requests`) where the data is intended to be publicly available.
+ *   - Strict User Ownership: Enforces strict user-ownership for user-specific data stored under `/users/{userId}`.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profiles, accessible only by the user themselves.
- * - /users/{userId}/game_requests/{gameRequestId}: Stores game requests, accessible only by the user who created them.
- * - /available_games/{availableGameId}: Stores information about available games, publicly readable.
- * - /users/{userId}/messages/{messageId}: Stores user messages, accessible only by the sender and receiver.
+ * - `/game_requests/{gameRequestId}`: Stores publicly accessible game requests.
+ * - `/available_games/{availableGameId}`: Stores publicly accessible information about available games.
+ * - `/users/{userId}`: Stores private user account data.
+ * - `/users/{userId}/messages/{messageId}`: Stores private user messages.
  *
  * Key Security Decisions:
- * - User listing is disallowed.
- * - Data validation is relaxed in the prototype to allow for rapid iteration.
- * - All write operations are protected by authorization checks.
+ * - Public read access to `game_requests` and `available_games` is permitted.
+ * - User listing is disabled for security and privacy.
+ * - Write access to user-specific data is strictly limited to the authenticated user.
  *
  * Denormalization for Authorization:
- * - Game requests and user messages are stored as subcollections of `/users/{userId}` to simplify ownership checks based on the path.
- *   This avoids the need for additional `get()` calls to determine ownership.
- *
- * Structural Segregation:
- * - Available games are stored in a separate top-level collection (`/available_games`) to allow for public read access while restricting write access.
+ *   - User ownership is enforced using path-based rules (e.g., `/users/{userId}`).
+ *   - The `userId` parameter in the path is matched against the `request.auth.uid` to ensure that only the authenticated user can access their own data.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profiles.
-     * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their own profile.
-     *    - request.auth.uid: 'user123'
-     *    - request.resource.data.id: 'user123'
-     * @allow (get) User with ID 'user123' can read their own profile.
-     *    - request.auth.uid: 'user123'
-     * @allow (update) User with ID 'user123' can update their own profile.
-     *    - request.auth.uid: 'user123'
-     * @allow (delete) User with ID 'user123' can delete their own profile.
-     *    - request.auth.uid: 'user123'
-     * @deny (create) User with ID 'user123' cannot create a profile for 'user456'.
-     *    - request.auth.uid: 'user123'
-     *    - request.resource.data.id: 'user456'
-     * @deny (get) User with ID 'user123' cannot read profile of 'user456'.
-     *    - request.auth.uid: 'user456'
-     * @principle Enforces document ownership for writes.
+     * @description Allows anyone to read game requests, but restricts write access.
+     * @path /game_requests/{gameRequestId}
+     * @allow (get, list)
+     * @deny (create, update, delete)
+     * @principle Allows public read access while restricting write access to prevent unauthorized modifications.
      */
-    match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId));
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false; // User listing is not permitted.
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+    match /game_requests/{gameRequestId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Controls access to game requests made by users.
-     * @path /users/{userId}/game_requests/{gameRequestId}
-     * @allow (create) User with ID 'user123' can create a game request under their profile.
-     *    - request.auth.uid: 'user123'
-     * @allow (get) User with ID 'user123' can read a game request under their profile.
-     *    - request.auth.uid: 'user123'
-     * @allow (update) User with ID 'user123' can update a game request under their profile.
-     *    - request.auth.uid: 'user123'
-     * @allow (delete) User with ID 'user123' can delete a game request under their profile.
-     *    - request.auth.uid: 'user123'
-     * @deny (create) User with ID 'user123' cannot create a game request under 'user456' profile.
-     *    - request.auth.uid: 'user123'
-     * @deny (get) User with ID 'user123' cannot read a game request under 'user456' profile.
-     *    - request.auth.uid: 'user456'
-     * @principle Restricts access to a user's own game requests.
-     */
-    match /users/{userId}/game_requests/{gameRequestId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-       function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId)/game_requests/$(gameRequestId));
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Controls access to available games.
+     * @description Allows anyone to read available games, but restricts write access.
      * @path /available_games/{availableGameId}
-     * @allow (get) Any user can read information about available games.
-     *    - request.auth.uid: null (or any user ID)
-     * @deny (create) Non-admin user cannot create available games.
-     *    - request.auth.uid: 'user123'
-     * @principle Allows public read access to available games.
+     * @allow (get, list)
+     * @deny (create, update, delete)
+     * @principle Allows public read access while restricting write access to prevent unauthorized modifications.
      */
     match /available_games/{availableGameId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false; // TODO: Add admin role check once implemented.
-      allow update: if false; // TODO: Add admin role check once implemented.
-      allow delete: if false; // TODO: Add admin role check once implemented.
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
-     /**
-     * @description Controls access to messages sent between users.
+    /**
+     * @description Manages user accounts, enforcing that only the authenticated user can manage their own account.
+     * @path /users/{userId}
+     * @allow (create) User can create their own account.
+     * @allow (get, update, delete) User can only access their own account.
+     * @deny (list) Prevents listing all users.
+     * @deny (create, update, delete) if not signed in or trying to access another user's account.
+     * @principle Enforces user-ownership for user account data.
+     */
+    match /users/{userId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages user messages, ensuring only the authenticated user can manage their own messages.
      * @path /users/{userId}/messages/{messageId}
-     * @allow (create) User with ID 'user123' can create a message under their profile.
-     *    - request.auth.uid: 'user123'
-     * @allow (get) User with ID 'user123' can read a message under their profile if they are the sender or receiver.
-     *    - request.auth.uid: 'user123'
-     * @allow (update) User with ID 'user123' can update a message under their profile if they are the sender or receiver.
-     *    - request.auth.uid: 'user123'
-     * @allow (delete) User with ID 'user123' can delete a message under their profile if they are the sender.
-     *    - request.auth.uid: 'user123'
-     * @deny (create) User with ID 'user123' cannot create a message under 'user456' profile.
-     *    - request.auth.uid: 'user123'
-     * @deny (get) User with ID 'user123' cannot read a message under 'user456' profile if they are not the sender or receiver.
-     *    - request.auth.uid: 'user456'
-     * @principle Restricts access to a user's own messages and messages they are a part of.
+     * @allow (get, list, create, update, delete) User can only access their own messages.
+     * @deny (create, update, delete) if not signed in or trying to access another user's messages.
+     * @principle Enforces user-ownership for user messages using path-based rules.
      */
     match /users/{userId}/messages/{messageId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
 
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+    // --- Helper Functions ---
 
-      function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId)/messages/$(messageId));
-      }
-      
-      // TODO: Need to validate senderId/receiverId in the request.resource.data
+    /**
+     * @description Checks if the user is signed in.
+     * @return {bool} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId); // Requires the data to have userId
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+    /**
+     * @description Checks if the authenticated user is the owner of the resource, based on the userId.
+     * @param {string} userId The user ID to compare against the authenticated user's UID.
+     * @return {bool} True if the user is the owner, false otherwise.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the resource and the resource exists.
+     * @param {string} userId The user ID to compare against the authenticated user's UID.
+     * @return {bool} True if the user is the owner and the resource exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
     }
   }
 }
