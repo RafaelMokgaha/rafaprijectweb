@@ -85,7 +85,7 @@ function AdminDashboard() {
     setSelectedRequest(null);
     toast({
       title: 'Reply Sent',
-      description: 'Your message has been sent and the request has been removed.',
+      description: 'Your message has been sent.',
     });
   };
 

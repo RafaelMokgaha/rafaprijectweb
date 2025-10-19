@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -73,7 +73,6 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
     setIsSubmitting(true);
 
     const messagesCollection = collection(firestore, `users/${request.userId}/messages`);
-    const gameRequestRef = doc(firestore, 'game_requests', request.id);
 
     const messageData = {
       receiverId: request.userId,
@@ -85,22 +84,8 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
     };
 
     try {
-      // Non-blocking addDoc with chained error handling
       await addDoc(messagesCollection, messageData)
-        .then(() => {
-            // Only try to delete if message was sent successfully
-            return deleteDoc(gameRequestRef).catch((deleteError) => {
-                // This will catch a permissions error on the deleteDoc call
-                const permissionError = new FirestorePermissionError({
-                    path: gameRequestRef.path,
-                    operation: 'delete',
-                });
-                errorEmitter.emit('permission-error', permissionError);
-                throw permissionError; // Throw to be caught by the outer catch block
-            });
-        })
         .catch((error) => {
-            // This will catch a permissions error on the addDoc call, or a thrown error from deleteDoc's catch
             if (!(error instanceof FirestorePermissionError)) {
                 const permissionError = new FirestorePermissionError({
                     path: messagesCollection.path,
@@ -108,16 +93,15 @@ export function AdminReplyDialog({ isOpen, setIsOpen, request, onSuccess }: Admi
                     requestResourceData: messageData,
                 });
                 errorEmitter.emit('permission-error', permissionError);
-                throw permissionError; // Throw to be caught by the outer catch block
+                throw permissionError; 
             }
-            throw error; // Re-throw the original permission error
+            throw error; 
         });
       
       onSuccess();
       form.reset();
 
     } catch (error: any) {
-       // This final catch is a fallback. The specific errors are handled and emitted above.
        if (!(error.name === 'FirebaseError' && error.message.includes('permission'))) {
             toast({
                 title: "An Unexpected Error Occurred",
