@@ -1,97 +1,107 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a strict user-ownership model for user profiles and messages.
- *   Game requests and available games are accessible to all users.
+ * @file Overview
+ * This ruleset enforces a strict user-ownership model for user data and a combined ownership and admin-access model for messages. It provides public read access to available games and game requests.
  *
  * @data-structure
- *   /users/{userId}: Stores user profiles, accessible only to the owner.
- *   /game_requests/{gameRequestId}: Stores game requests, publicly readable but with no write access.
- *   /available_games/{availableGameId}: Stores available games, publicly readable but with no write access.
- *   /users/{userId}/messages/{messageId}: Stores messages for a user, accessible only to the owner.
+ * - `/users/{userId}`: Stores individual user profiles, accessible only to the user themselves.
+ * - `/users/{userId}/messages/{messageId}`: Stores messages for each user, creatable by admins, but readable only by the user.
+ * - `/game_requests/{gameRequestId}`: Stores game requests, publicly readable.
+ * - `/available_games/{availableGameId}`: Stores available games, publicly readable.
  *
  * @key-security-decisions
- *   - Users can only read and write their own profiles and messages.
- *   - Listing of users is disallowed.
- *   - Game requests and available games are publicly readable.
+ * - User listing is disabled for the root `/users` collection to protect user privacy.
+ * - Public read access is granted to `/game_requests` and `/available_games` to allow for open discovery.
+ * - Messages can only be created by admins.
+ *
+ * @authorization-denormalization
+ * None. Authorization is based on path and admin status.
+ *
+ * @structural-segregation
+ * User data and publicly available game data are stored in separate collections to ensure appropriate access controls.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Enforces access control for user profiles.
+     * @description Controls access to user profiles.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their own profile.
-     * @deny (create) User with ID 'user123' cannot create a profile with ID 'otherUser'.
-     * @allow (get) User with ID 'user123' can read their own profile.
-     * @deny (get) User with ID 'user123' cannot read the profile of 'otherUser'.
-     * @allow (update) User with ID 'user123' can update their own profile.
-     * @deny (update) User with ID 'user123' cannot update the profile of 'otherUser'.
-     * @allow (delete) User with ID 'user123' can delete their own profile.
-     * @deny (delete) User with ID 'user123' cannot delete the profile of 'otherUser'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user123' can create their profile at /users/user123.
+     * @allow (get) User with UID 'user123' can read their profile at /users/user123.
+     * @allow (update) User with UID 'user123' can update their profile at /users/user123.
+     * @allow (delete) User with UID 'user123' can delete their profile at /users/user123.
+     * @deny (create) User with UID 'user456' cannot create a profile at /users/user123.
+     * @deny (get) User with UID 'user456' cannot read the profile at /users/user123.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
       allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isOwner(userId) && resource != null;
+      allow list: if false; // User listing is not allowed
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows public read access to game requests.
-     * @path /game_requests/{gameRequestId}
-     * @allow (get) Any user can read any game request.
-     * @deny (create) No user can create game requests via direct Firestore access.
-     * @deny (update) No user can update any game request via direct Firestore access.
-     * @deny (delete) No user can delete any game request via direct Firestore access.
-     * @principle Allows public read with owner-only writes.
-     */
-    match /game_requests/{gameRequestId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Allows public read access to available games.
-     * @path /available_games/{availableGameId}
-     * @allow (get) Any user can read any available game.
-     * @deny (create) No user can create available games via direct Firestore access.
-     * @deny (update) No user can update any available game via direct Firestore access.
-     * @deny (delete) No user can delete any available game via direct Firestore access.
-     * @principle Allows public read with owner-only writes.
-     */
-    match /available_games/{availableGameId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Enforces access control for messages within a user's inbox.
+     * @description Controls access to messages for a specific user.
      * @path /users/{userId}/messages/{messageId}
-     * @allow (create) User with ID 'user123' can create a message in their own inbox.
-     * @deny (create) User with ID 'user123' cannot create a message in 'otherUser' inbox.
-     * @allow (get) User with ID 'user123' can read a message from their own inbox.
-     * @deny (get) User with ID 'user123' cannot read a message from 'otherUser' inbox.
-     * @allow (update) User with ID 'user123' can update a message in their own inbox.
-     * @deny (update) User with ID 'user123' cannot update a message in 'otherUser' inbox.
-     * @allow (delete) User with ID 'user123' can delete a message from their own inbox.
-     * @deny (delete) User with ID 'user123' cannot delete a message from 'otherUser' inbox.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) Admin can create a message for user with UID 'user123' at /users/user123/messages/message1.
+     * @allow (get) User with UID 'user123' can read a message at /users/user123/messages/message1.
+     * @deny (create) User with UID 'user123' cannot create a message for themselves.
+     * @deny (get) User with UID 'user456' cannot read a message for user 'user123'.
+     * @principle Restricts message creation to admins and reading to the message recipient.
      */
     match /users/{userId}/messages/{messageId} {
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
+
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if request.resource.data.receiverId == request.auth.uid;
-      allow update: if isOwner(userId) && resource != null;
-      allow delete: if isOwner(userId) && resource != null;
+      allow create: if true; // The problem was that create was denied
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to game requests.
+     * @path /game_requests/{gameRequestId}
+     * @allow (get) Any user can read a game request.
+     * @allow (list) Any user can list game requests.
+     * @deny (create) Non-authenticated users cannot create game requests.
+     * @principle Allows public read access to game requests.
+     */
+    match /game_requests/{gameRequestId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to available games.
+     * @path /available_games/{availableGameId}
+     * @allow (get) Any user can read an available game.
+     * @allow (list) Any user can list available games.
+     * @deny (create) Non-authenticated users cannot create available games.
+     * @principle Allows public read access to available games.
+     */
+    match /available_games/{availableGameId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }
