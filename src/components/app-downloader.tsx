@@ -22,24 +22,19 @@ export function AppDownloader() {
       return;
     }
 
-    // IMPORTANT: Replace this with your actual download URL structure.
-    // For example, if your files are hosted at 'https://my-files.com/download?id=',
-    // the URL would be `https://my-files.com/download?id=${appId}`
-    const downloadUrl = `/api/download-placeholder?appId=${appId}`;
-
-    // This creates a temporary link to trigger the browser's download prompt.
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    // You can optionally suggest a filename here.
-    // link.download = `app-${appId}.zip`; 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
+    // In a real application, you would trigger a file download here.
+    // Since I cannot implement the backend for this, I will show a notification
+    // to confirm the button is working.
+    
     toast({
-      title: 'Download Started',
-      description: `Downloading files for App ID: ${appId}`,
+      title: 'Download Triggered (Placeholder)',
+      description: `In a real app, a download for App ID: ${appId} would start now.`,
     });
+    
+    // IMPORTANT: When you have a backend, you can replace the toast above
+    // with your download logic. For example:
+    // const downloadUrl = `https://your-backend-service.com/download?appId=${appId}`;
+    // window.location.href = downloadUrl;
 
     setAppId('');
   };
