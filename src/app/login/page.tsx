@@ -104,9 +104,13 @@ export default function LoginPage() {
         description: 'Welcome!',
       });
     } catch (error: any) {
+      let description = error.message || 'Could not sign in with Google.';
+      if (error.code === 'auth/operation-not-allowed') {
+        description = 'Google Sign-In is not enabled for this project. Please enable it in the Firebase console.';
+      }
       toast({
         title: 'Google Sign-In Failed',
-        description: error.message || 'Could not sign in with Google.',
+        description: description,
         variant: 'destructive',
       });
     } finally {
@@ -247,3 +251,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
