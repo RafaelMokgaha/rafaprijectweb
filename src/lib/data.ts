@@ -33,9 +33,9 @@ export const availableGames: Game[] = [
     category: 'Simulation',
   },
   {
-    title: 'FC25',
+    title: 'FC 25',
     platforms: ['PC', 'PS5', 'Xbox Series X'],
-    imageId: 'fc25',
+    imageId: 'fc_25',
     category: 'Sports',
   }
 ];
