@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
+import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -80,21 +80,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     setIsSubmitting(true);
 
     try {
-      const batch = writeBatch(firestore);
-      
-      // 1. Create the auto-reply message in the user's inbox
-      const messageRef = doc(collection(firestore, `users/${user.uid}/messages`));
-      const messageData = {
-          receiverId: user.uid,
-          subject: `Your Game Request: ${data.gameName}`,
-          body: `Thank you for your request!\n\nA ticket has been opened on Discord, and we will be with you shortly.`,
-          sentAt: serverTimestamp(),
-          isRead: false,
-      };
-      batch.set(messageRef, messageData);
-
-      // 2. Create the game request document and link it to the message
-      const gameRequestRef = doc(collection(firestore, 'game_requests'));
+      const gameRequestRef = collection(firestore, 'game_requests');
       const requestData = {
         userId: user.uid,
         name: data.name,
@@ -104,24 +90,21 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
         platform: 'PC',
         requestDate: serverTimestamp(),
         status: 'pending',
-        messageId: messageRef.id, // Link the request to the message
       };
-      batch.set(gameRequestRef, requestData);
-
-      // Commit the batch
-      await batch.commit();
+      
+      await addDoc(gameRequestRef, requestData);
 
       onSuccess();
       form.reset();
       toast({
         title: "Request Submitted!",
-        description: "An auto-reply has been sent to your in-app inbox.",
+        description: "A ticket has been opened on Discord, and we will be with you shortly.",
       });
 
     } catch (error: any) {
        // We assume any error here is a permission error until proven otherwise
       const permissionError = new FirestorePermissionError({
-          path: 'game_requests or user messages', // Broad path as it could be request or message
+          path: 'game_requests',
           operation: 'create',
           requestResourceData: { request: data },
         });
@@ -145,7 +128,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl text-shadow-glow">Request a Game</DialogTitle>
           <DialogDescription>
-            Fill out the form below and we'll look into it.
+            Fill out the form below. A ticket will be opened on Discord.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
