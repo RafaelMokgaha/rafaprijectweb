@@ -36,6 +36,15 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+   // This will make the standalone HTML page work
+  async rewrites() {
+    return [
+      {
+        source: '/',
+        destination: '/index.html',
+      },
+    ]
+  },
 };
 
 export default nextConfig;
