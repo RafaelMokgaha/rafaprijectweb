@@ -98,7 +98,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       form.reset();
       toast({
         title: "Request Submitted!",
-        description: "We saw your request. Please go to Discord and open a ticket. We will be with you shortly.",
+        description: "After your request, go to Discord and open a ticket. We will be with you shortly.",
       });
 
     } catch (error: any) {
@@ -128,7 +128,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl text-shadow-glow">Request a Game</DialogTitle>
           <DialogDescription>
-            We saw your request. Please go to Discord and open a ticket. We will be with you shortly.
+            After your request, go to Discord and open a ticket. We will be with you shortly.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
