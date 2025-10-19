@@ -1,7 +1,7 @@
 
 'use client';
 
-import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/accordion"
 import { Badge } from '@/components/ui/badge';
 import { Paperclip, Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface Message {
   id: string;
@@ -52,6 +53,16 @@ function Inbox() {
       return format(timestamp.toDate(), 'PPP p');
     }
     return 'Date not available';
+  }
+
+  const handleMarkAsRead = async (messageId: string, isRead: boolean) => {
+    if (isRead || !firestore || !user) return;
+    const messageRef = doc(firestore, `users/${user.uid}/messages`, messageId);
+    try {
+        await updateDoc(messageRef, { isRead: true });
+    } catch (e) {
+        console.error("Error marking message as read: ", e);
+    }
   }
 
   const handleDeleteMessage = async (messageId: string) => {
@@ -94,7 +105,12 @@ function Inbox() {
           {messages && !isLoading && (
             <div className="max-w-4xl mx-auto">
                 {messages.length > 0 ? (
-                    <Accordion type="single" collapsible className="w-full">
+                    <Accordion type="single" collapsible className="w-full" onValueChange={(value) => {
+                        const msg = messages.find(m => m.id === value);
+                        if (msg) {
+                            handleMarkAsRead(msg.id, msg.isRead);
+                        }
+                    }}>
                         {messages.map(msg => (
                             <AccordionItem value={msg.id} key={msg.id} className="bg-card/50 backdrop-blur-sm border-primary/20 rounded-lg mb-4 px-4">
                                 <AccordionTrigger>

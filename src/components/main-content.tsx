@@ -12,12 +12,18 @@ import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
 import { RequestGameDialog } from '@/components/request-game-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from './ui/button';
 import Link from 'next/link';
+import { collection, query, where } from 'firebase/firestore';
 
 const ADMIN_EMAIL = 'rafaproject06@gmail.com';
+
+interface Message {
+  id: string;
+  isRead: boolean;
+}
 
 export function MainContent() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
@@ -26,7 +32,19 @@ export function MainContent() {
   const { toast } = useToast();
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+  const unreadMessagesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/messages`),
+      where('isRead', '==', false)
+    );
+  }, [firestore, user]);
+
+  const { data: unreadMessages } = useCollection<Message>(unreadMessagesQuery);
+  const unreadCount = unreadMessages?.length || 0;
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -67,9 +85,16 @@ export function MainContent() {
         {user && (
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary-foreground">Welcome, {user.displayName || user.email}</span>
-             <Button variant="outline" size="sm" asChild>
-                <Link href="/inbox">Inbox</Link>
-            </Button>
+            <div className="relative">
+               <Button variant="outline" size="sm" asChild>
+                  <Link href="/inbox">Inbox</Link>
+              </Button>
+              {unreadCount > 0 && (
+                <div className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                  {unreadCount}
+                </div>
+              )}
+            </div>
             {isAdmin && (
               <Button variant="outline" size="sm" asChild>
                   <Link href="/admin">Admin</Link>

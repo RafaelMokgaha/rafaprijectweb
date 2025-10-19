@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -37,6 +38,7 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
   const { user } = useUser();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
@@ -81,7 +83,6 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     try {
       const batch = writeBatch(firestore);
 
-      // 1. Create the Game Request
       const gameRequestRef = doc(collection(firestore, 'game_requests'));
       const requestData = {
         userId: user.uid,
@@ -95,12 +96,11 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       };
       batch.set(gameRequestRef, requestData);
 
-      // 2. Create the auto-reply message in the user's inbox
       const messageRef = doc(collection(firestore, `users/${user.uid}/messages`));
       const messageData = {
         receiverId: user.uid,
         subject: `Your Game Request: "${data.gameName}"`,
-        body: "Thank you for your request. Please go to Discord and open a ticket. We will be with you shortly.",
+        body: "go to discord open ticksts",
         sentAt: serverTimestamp(),
         isRead: false,
         gameRequestId: gameRequestRef.id,
@@ -109,23 +109,25 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       
       await batch.commit();
 
+      if (audioRef.current) {
+        audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
+      }
+
       onSuccess();
       form.reset();
       toast({
         title: "Request Submitted!",
-        description: "We've sent a confirmation to your inbox. Please follow the instructions there.",
+        description: "go to discord open ticksts",
       });
 
     } catch (error: any) {
-       // We assume any error here is a permission error until proven otherwise
       const permissionError = new FirestorePermissionError({
-          path: `game_requests and user messages`,
+          path: `game_requests/${doc(collection(firestore, 'game_requests')).id}`,
           operation: 'create',
           requestResourceData: { request: data },
         });
       errorEmitter.emit('permission-error', permissionError);
 
-      // We still show a toast to the user, as the global error handler is for dev visibility
       toast({
           title: "Error Submitting Request",
           description: "There was a problem submitting your request. Please try again later.",
@@ -210,6 +212,8 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
             </Button>
           </form>
         </Form>
+        {/* IMPORTANT: You need to replace this src with a URL to your own sound file. */}
+        <audio ref={audioRef} src="/placeholder-notification.mp3" preload="auto" />
       </DialogContent>
     </Dialog>
   );
