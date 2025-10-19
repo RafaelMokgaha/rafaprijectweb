@@ -1,3 +1,4 @@
+
 import type { Game } from '@/lib/types';
 
 export const availableGames: Game[] = [
@@ -31,4 +32,10 @@ export const availableGames: Game[] = [
     imageId: 'beamng_drive',
     category: 'Simulation',
   },
+  {
+    title: 'FC25',
+    platforms: ['PC', 'PS5', 'Xbox Series X'],
+    imageId: 'fc25',
+    category: 'Sports',
+  }
 ];
