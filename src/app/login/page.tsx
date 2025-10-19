@@ -7,6 +7,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +26,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
 import { placeHolderImages } from '@/lib/placeholder-images';
+import { Separator } from '@/components/ui/separator';
 
 export default function LoginPage() {
   const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [signupName, setSignupName] = useState('');
@@ -89,6 +93,27 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome!',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Google Sign-In Failed',
+        description: error.message || 'Could not sign in with Google.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
@@ -142,10 +167,24 @@ export default function LoginPage() {
                     />
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                <CardFooter className="flex-col gap-4">
+                  <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
                     {isLoading && <Icons.loader className="mr-2 h-4 w-4 animate-spin" />}
                     Log In
+                  </Button>
+                  <div className="relative w-full">
+                    <Separator />
+                    <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-card px-2 text-sm text-muted-foreground">
+                      OR
+                    </span>
+                  </div>
+                  <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                    {isGoogleLoading ? (
+                      <Icons.loader className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Icons.google className="mr-2 h-4 w-4" />
+                    )}
+                    Sign in with Google
                   </Button>
                 </CardFooter>
               </form>
