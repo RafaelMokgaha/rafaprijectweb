@@ -39,9 +39,6 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-   // This will make the standalone HTML page work
-  output: 'export',
-  trailingSlash: true,
 };
 
 export default nextConfig;
