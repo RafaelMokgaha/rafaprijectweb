@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
@@ -21,7 +21,18 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
-import { AlertTriangle, Mail } from 'lucide-react';
+import { AlertTriangle, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface GameRequest {
     id: string;
@@ -32,6 +43,7 @@ interface GameRequest {
     status: string;
     requestDate: any;
     notes: string;
+    messageId?: string; // Optional messageId to link request to the auto-reply
 }
 
 const ADMIN_EMAIL = 'rafaproject06@gmail.com';
@@ -71,6 +83,39 @@ function AdminDashboard() {
         return 'outline';
     }
   }
+  
+  const handleDeleteRequest = async (request: GameRequest) => {
+    if (!firestore || !user) return;
+    try {
+        const batch = writeBatch(firestore);
+
+        // 1. Reference and delete the game request
+        const gameRequestRef = doc(firestore, 'game_requests', request.id);
+        batch.delete(gameRequestRef);
+
+        // 2. Reference and delete the associated message, if it exists
+        if (request.messageId) {
+            const messageRef = doc(firestore, `users/${request.userId}/messages`, request.messageId);
+            batch.delete(messageRef);
+        }
+
+        // Commit the batch
+        await batch.commit();
+
+        toast({
+            title: "Request Deleted",
+            description: "The game request and associated message have been deleted.",
+        });
+    } catch (e) {
+        console.error("Error deleting request: ", e);
+        toast({
+            title: "Error",
+            description: "Could not delete the request. Please check permissions.",
+            variant: "destructive",
+        });
+    }
+  }
+
 
   return (
     <>
@@ -97,10 +142,9 @@ function AdminDashboard() {
                   <TableRow>
                     <TableHead>Game Name</TableHead>
                     <TableHead>Requester</TableHead>
-                    <TableHead>Email</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Notes</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -110,20 +154,42 @@ function AdminDashboard() {
                         <TableRow key={req.id}>
                           <TableCell className="font-medium">{req.gameName}</TableCell>
                           <TableCell>{req.name}</TableCell>
-                          <TableCell>{req.email}</TableCell>
                           <TableCell>
                              <Badge variant={getStatusVariant(req.status)}>
                               {req.status}
                             </Badge>
                           </TableCell>
                           <TableCell>{formatDate(req.requestDate)}</TableCell>
-                          <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
+                           <TableCell>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="sm">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the game request
+                                        and the associated message from the user's inbox.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteRequest(req)}>
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                          </TableCell>
                         </TableRow>
                       )
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center">
+                      <TableCell colSpan={5} className="text-center">
                         No game requests yet.
                       </TableCell>
                     </TableRow>

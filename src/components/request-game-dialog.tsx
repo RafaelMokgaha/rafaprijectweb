@@ -82,7 +82,18 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     try {
       const batch = writeBatch(firestore);
       
-      // 1. Create the game request document
+      // 1. Create the auto-reply message in the user's inbox
+      const messageRef = doc(collection(firestore, `users/${user.uid}/messages`));
+      const messageData = {
+          receiverId: user.uid,
+          subject: `Your Game Request: ${data.gameName}`,
+          body: `Thank you for your request!\n\nA ticket has been opened on Discord, and we will be with you shortly.`,
+          sentAt: serverTimestamp(),
+          isRead: false,
+      };
+      batch.set(messageRef, messageData);
+
+      // 2. Create the game request document and link it to the message
       const gameRequestRef = doc(collection(firestore, 'game_requests'));
       const requestData = {
         userId: user.uid,
@@ -93,21 +104,10 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
         platform: 'PC',
         requestDate: serverTimestamp(),
         status: 'pending',
+        messageId: messageRef.id, // Link the request to the message
       };
       batch.set(gameRequestRef, requestData);
 
-      // 2. Create the auto-reply message in the user's inbox
-      const messageRef = doc(collection(firestore, `users/${user.uid}/messages`));
-      const messageData = {
-          receiverId: user.uid,
-          subject: `Your Game Request: ${data.gameName}`,
-          body: `Thank you for your request!\n\nA ticket has been opened on Discord, and we will be with you shortly.`,
-          sentAt: serverTimestamp(),
-          isRead: false,
-          gameRequestId: gameRequestRef.id,
-      };
-      batch.set(messageRef, messageData);
-      
       // Commit the batch
       await batch.commit();
 
@@ -121,15 +121,16 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     } catch (error: any) {
        // We assume any error here is a permission error until proven otherwise
       const permissionError = new FirestorePermissionError({
-          path: 'game_requests', // Broad path as it could be request or message
+          path: 'game_requests or user messages', // Broad path as it could be request or message
           operation: 'create',
           requestResourceData: { request: data },
         });
       errorEmitter.emit('permission-error', permissionError);
 
+      // We still show a toast to the user, as the global error handler is for dev visibility
       toast({
           title: "Error Submitting Request",
-          description: "You do not have permission to perform this action. Please check security rules.",
+          description: "There was a problem submitting your request. Please try again later.",
           variant: "destructive",
       });
     } finally {
