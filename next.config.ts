@@ -36,6 +36,12 @@ const nextConfig: NextConfig = {
         hostname: 'static.wixstatic.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn2.steamgriddb.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
