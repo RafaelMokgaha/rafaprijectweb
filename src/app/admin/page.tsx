@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
 import { AlertTriangle, Mail } from 'lucide-react';
+import { AdminReplyDialog } from '@/components/admin-reply-dialog';
 
 interface GameRequest {
     id: string;
@@ -41,6 +42,8 @@ function AdminDashboard() {
   const { user } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
+  const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<GameRequest | null>(null);
 
   const gameRequestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -71,11 +74,19 @@ function AdminDashboard() {
         return 'outline';
     }
   }
+
+  const handleReplyClick = (request: GameRequest) => {
+    setSelectedRequest(request);
+    setIsReplyDialogOpen(true);
+  };
   
-  const generateMailtoLink = (req: GameRequest) => {
-    const subject = encodeURIComponent(`Re: Your game request for ${req.gameName}`);
-    const body = encodeURIComponent(`Hi ${req.name},\n\nRegarding your request for ${req.gameName}...\n\n`);
-    return `mailto:${req.email}?subject=${subject}&body=${body}`;
+  const handleReplySuccess = () => {
+    setIsReplyDialogOpen(false);
+    setSelectedRequest(null);
+    toast({
+      title: 'Reply Sent',
+      description: 'Your message has been sent and the request has been removed.',
+    });
   };
 
   return (
@@ -126,11 +137,9 @@ function AdminDashboard() {
                           <TableCell>{formatDate(req.requestDate)}</TableCell>
                           <TableCell className="max-w-xs truncate">{req.notes || 'N/A'}</TableCell>
                           <TableCell className="text-right">
-                             <Button asChild size="sm">
-                                <a href={generateMailtoLink(req)}>
-                                    <Mail className="mr-2 h-4 w-4" />
-                                    Reply via Email
-                                </a>
+                             <Button size="sm" onClick={() => handleReplyClick(req)}>
+                                <Mail className="mr-2 h-4 w-4" />
+                                Reply
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -149,6 +158,14 @@ function AdminDashboard() {
           )}
         </SectionWrapper>
       </main>
+      {selectedRequest && (
+        <AdminReplyDialog
+          isOpen={isReplyDialogOpen}
+          setIsOpen={setIsReplyDialogOpen}
+          request={selectedRequest}
+          onSuccess={handleReplySuccess}
+        />
+      )}
     </>
   );
 }

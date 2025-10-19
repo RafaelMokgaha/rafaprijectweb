@@ -26,6 +26,7 @@ interface Message {
   body: string;
   sentAt: any;
   isRead: boolean;
+  gameRequestId?: string;
 }
 
 function Inbox() {
@@ -81,6 +82,7 @@ function Inbox() {
                                     <div className="flex justify-between items-center w-full">
                                         <div className='flex items-center gap-4'>
                                             {!msg.isRead && <Badge>New</Badge>}
+                                            {msg.gameRequestId && <Paperclip className="h-4 w-4 text-muted-foreground" />}
                                             <span className='font-bold'>{msg.subject}</span>
                                         </div>
                                         <span className='text-sm text-muted-foreground'>{formatDate(msg.sentAt)}</span>

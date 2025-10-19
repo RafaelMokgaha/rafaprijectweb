@@ -152,6 +152,10 @@
         "isRead": {
           "type": "boolean",
           "description": "Whether the user has read the message."
+        },
+        "gameRequestId": {
+            "type": "string",
+            "description": "The optional ID of the game request this message is related to."
         }
       },
       "required": [
