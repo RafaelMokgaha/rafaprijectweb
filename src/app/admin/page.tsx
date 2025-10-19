@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, doc, writeBatch, FirestoreError } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser, useAuth, useMemoFirebase } from '@/firebase';
 import { AuthGate } from '@/app/auth-gate';
 import { Header } from '@/components/header';
@@ -32,7 +32,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 interface GameRequest {
     id: string;
@@ -86,34 +88,43 @@ function AdminDashboard() {
   
   const handleDeleteRequest = async (request: GameRequest) => {
     if (!firestore || !user) return;
-    try {
-        const batch = writeBatch(firestore);
+    
+    const batch = writeBatch(firestore);
 
-        // 1. Reference and delete the game request
-        const gameRequestRef = doc(firestore, 'game_requests', request.id);
-        batch.delete(gameRequestRef);
+    // 1. Reference the game request to delete
+    const gameRequestRef = doc(firestore, 'game_requests', request.id);
+    batch.delete(gameRequestRef);
 
-        // 2. Reference and delete the associated message, if it exists
-        if (request.messageId) {
-            const messageRef = doc(firestore, `users/${request.userId}/messages`, request.messageId);
-            batch.delete(messageRef);
-        }
+    // 2. Reference the associated message to delete, if it exists
+    if (request.messageId) {
+        const messageRef = doc(firestore, `users/${request.userId}/messages`, request.messageId);
+        batch.delete(messageRef);
+    }
 
-        // Commit the batch
-        await batch.commit();
-
+    // Commit the batch and handle potential permission errors
+    batch.commit()
+      .then(() => {
         toast({
             title: "Request Deleted",
             description: "The game request and associated message have been deleted.",
         });
-    } catch (e) {
-        console.error("Error deleting request: ", e);
-        toast({
-            title: "Error",
-            description: "Could not delete the request. Please check permissions.",
-            variant: "destructive",
-        });
-    }
+      })
+      .catch((err: FirestoreError) => {
+          // This is the new error handling part.
+          const permissionError = new FirestorePermissionError({
+              path: `game_requests/${request.id} and users/${request.userId}/messages/${request.messageId}`,
+              operation: 'delete', // A batch can contain multiple ops, but 'delete' is the intent.
+          });
+          errorEmitter.emit('permission-error', permissionError);
+
+          // We still show a generic toast to the user.
+          // The detailed error is for the developer via the Next.js overlay.
+          toast({
+              title: "Error",
+              description: "Could not delete the request. Please check permissions.",
+              variant: "destructive",
+          });
+      });
   }
 
 
