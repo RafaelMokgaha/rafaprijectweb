@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { SectionTitle, SectionWrapper } from '@/components/shared/section-layout';
 import Link from 'next/link';
@@ -48,7 +49,7 @@ export function InstructionsSection() {
             <div>
               <h4 className="font-bold text-xl text-primary-foreground">Receive the Game</h4>
               <p className="text-primary-foreground/80 mt-1">
-                After your request is confirmed, you’ll receive the game directly through Discord from the admin. Check your Discord messages for the download link or file sent to you.
+                After your request is confirmed, you’ll receive the game directly through Discord from the admin. CHECK YOUR TICKTS ON RAFA PROJECT DISCORD.
               </p>
             </div>
           </div>
