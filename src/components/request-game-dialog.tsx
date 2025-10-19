@@ -79,32 +79,33 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     
     setIsSubmitting(true);
 
+    const gameRequestRef = doc(collection(firestore, 'game_requests'));
+    const messageRef = doc(collection(firestore, `users/${user.uid}/messages`));
+    
+    const requestData = {
+      userId: user.uid,
+      name: data.name,
+      email: data.email,
+      gameName: data.gameName,
+      notes: data.notes || '',
+      platform: 'PC',
+      requestDate: serverTimestamp(),
+      status: 'pending',
+    };
+    
+    const messageBody = `Thank you for your game request for "${data.gameName}".\n\nTo complete your request and track its status, please open a ticket on our Discord server. We will be with you shortly.`;
+    const messageData = {
+      receiverId: user.uid,
+      subject: `Your Game Request: "${data.gameName}"`,
+      body: messageBody,
+      sentAt: serverTimestamp(),
+      isRead: false,
+      gameRequestId: gameRequestRef.id,
+    };
+
     try {
       const batch = writeBatch(firestore);
-
-      const gameRequestRef = doc(collection(firestore, 'game_requests'));
-      const requestData = {
-        userId: user.uid,
-        name: data.name,
-        email: data.email,
-        gameName: data.gameName,
-        notes: data.notes || '',
-        platform: 'PC',
-        requestDate: serverTimestamp(),
-        status: 'pending',
-      };
       batch.set(gameRequestRef, requestData);
-
-      const messageRef = doc(collection(firestore, `users/${user.uid}/messages`));
-      const messageBody = `Thank you for your game request for "${data.gameName}".\n\nTo complete your request and track its status, please open a ticket on our Discord server. We will be with you shortly.`;
-      const messageData = {
-        receiverId: user.uid,
-        subject: `Your Game Request: "${data.gameName}"`,
-        body: messageBody,
-        sentAt: serverTimestamp(),
-        isRead: false,
-        gameRequestId: gameRequestRef.id,
-      };
       batch.set(messageRef, messageData);
       
       await batch.commit();
@@ -117,12 +118,20 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
       });
 
     } catch (error: any) {
-      const permissionError = new FirestorePermissionError({
-          path: `game_requests/${doc(collection(firestore, 'game_requests')).id}`,
+      // Emit contextual errors for both potential write failures
+      const gameRequestError = new FirestorePermissionError({
+        path: gameRequestRef.path,
+        operation: 'create',
+        requestResourceData: requestData,
+      });
+      errorEmitter.emit('permission-error', gameRequestError);
+      
+      const messageError = new FirestorePermissionError({
+          path: messageRef.path,
           operation: 'create',
-          requestResourceData: { request: data },
-        });
-      errorEmitter.emit('permission-error', permissionError);
+          requestResourceData: messageData,
+      });
+      errorEmitter.emit('permission-error', messageError);
 
       toast({
           title: "Error Submitting Request",
