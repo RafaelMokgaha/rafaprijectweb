@@ -17,7 +17,6 @@ import { signOut } from 'firebase/auth';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
-import { AppDownloader } from './app-downloader';
 
 const ADMIN_EMAIL = 'rafaproject06@gmail.com';
 
@@ -114,7 +113,6 @@ export function MainContent() {
           </div>
           <TutorialSection />
           <InstructionsSection />
-          <AppDownloader />
           <DiscordSection />
         </main>
         <Footer />
