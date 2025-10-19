@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -79,45 +79,62 @@ export function RequestGameDialog({ isOpen, setIsOpen, gameName, onSuccess }: Re
     
     setIsSubmitting(true);
 
-    const gameRequestsCollection = collection(firestore, 'game_requests');
+    try {
+      const batch = writeBatch(firestore);
       
-    const requestData = {
-      userId: user.uid,
-      name: data.name,
-      email: data.email,
-      gameName: data.gameName,
-      notes: data.notes || '',
-      platform: 'PC',
-      requestDate: serverTimestamp(),
-      status: 'pending',
-    };
+      // 1. Create the game request document
+      const gameRequestRef = doc(collection(firestore, 'game_requests'));
+      const requestData = {
+        userId: user.uid,
+        name: data.name,
+        email: data.email,
+        gameName: data.gameName,
+        notes: data.notes || '',
+        platform: 'PC',
+        requestDate: serverTimestamp(),
+        status: 'pending',
+      };
+      batch.set(gameRequestRef, requestData);
 
-    addDoc(gameRequestsCollection, requestData)
-      .then(() => {
-        onSuccess();
-        form.reset();
-        toast({
-          title: "Request Submitted!",
-          description: "A ticket has been opened on Discord, and we will be with you shortly.",
-        });
-      })
-      .catch((error) => {
-        const permissionError = new FirestorePermissionError({
-          path: gameRequestsCollection.path,
+      // 2. Create the auto-reply message in the user's inbox
+      const messageRef = doc(collection(firestore, `users/${user.uid}/messages`));
+      const messageData = {
+          receiverId: user.uid,
+          subject: `Your Game Request: ${data.gameName}`,
+          body: `Thank you for your request!\n\nA ticket has been opened on Discord, and we will be with you shortly.`,
+          sentAt: serverTimestamp(),
+          isRead: false,
+          gameRequestId: gameRequestRef.id,
+      };
+      batch.set(messageRef, messageData);
+      
+      // Commit the batch
+      await batch.commit();
+
+      onSuccess();
+      form.reset();
+      toast({
+        title: "Request Submitted!",
+        description: "An auto-reply has been sent to your in-app inbox.",
+      });
+
+    } catch (error: any) {
+       // We assume any error here is a permission error until proven otherwise
+      const permissionError = new FirestorePermissionError({
+          path: 'game_requests', // Broad path as it could be request or message
           operation: 'create',
-          requestResourceData: requestData,
+          requestResourceData: { request: data },
         });
-        errorEmitter.emit('permission-error', permissionError);
+      errorEmitter.emit('permission-error', permissionError);
 
-        toast({
+      toast({
           title: "Error Submitting Request",
           description: "You do not have permission to perform this action. Please check security rules.",
           variant: "destructive",
-        });
-      })
-      .finally(() => {
-        setIsSubmitting(false);
       });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
 
