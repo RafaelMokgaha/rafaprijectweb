@@ -1,102 +1,112 @@
 /**
- * @fileoverview Firestore Security Rules for RAFA Project Launcher.
+ * @fileoverview Firestore Security Rules for the RAFA Project Launcher application.
  *
  * Core Philosophy:
- * This ruleset prioritizes a secure, user-centric data model with clear ownership.
- * It uses path-based authorization wherever possible to ensure that users can only
- * access their own data. Public read access is granted only where explicitly
- * intended, such as for available games.
+ * This ruleset enforces a strict user-ownership model for user-specific data
+ * and allows public read access to collections intended for general consumption.
+ * Authorization decisions are based on the authenticated user's ID (`request.auth.uid`).
  *
  * Data Structure:
- * - /game_requests/{gameRequestId}: Stores game requests submitted by users.
+ * - /game_requests/{gameRequestId}: Stores game requests.
  * - /available_games/{availableGameId}: Stores information about available games.
- * - /users/{userId}: Stores user account information, with the userId matching the Firebase auth UID.
- * - /users/{userId}/messages/{messageId}: Stores messages for each user under their respective user document.
- * - /login_events/{loginEventId}: Stores login events.
+ * - /users/{userId}: Stores user account information, using path-based ownership.
+ * - /users/{userId}/messages/{messageId}: Stores user messages, using path-based ownership.
+ * - /login_events/{loginEventId}: Stores user login events.
  *
  * Key Security Decisions:
- * - User data and messages are strictly controlled by path-based ownership.
- * - The login_events collection is not writeable at all via rules.
- * - List operation is not allowed on login_events collection
- * - Read-only collections (e.g., available_games) are publicly readable.
+ * - User data is strictly private, accessible only to the authenticated user.
+ * - Game requests and available games are publicly readable.
+ * - Listing of messages is restricted to the owner of the messages.
  *
  * Denormalization for Authorization:
- * - The rules rely on path-based authorization for user data and messages, avoiding the need for complex queries or data lookups.
+ * - User-specific data (e.g., messages) is stored under the user's path, enabling
+ *   path-based authorization and avoiding the need for `get()` calls.
+ *
+ * Structural Segregation:
+ * - Private user data (messages) is stored in a subcollection under the user's document,
+ *   ensuring that it is not publicly accessible.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows reading and writing of game requests.
+     * @description Allows anyone to read game requests, but restricts creation, update, and deletion.
      * @path /game_requests/{gameRequestId}
-     * @allow (create) Authenticated user can create game requests.
-     * @allow (get, list) Any user can read game requests.
-     * @allow (update, delete) No one can update or delete.
-     * @deny (create) Unauthenticated user cannot create game requests.
-     * @principle Allows public reads but requires authentication for creation.
+     * @allow get, list: if true
+     * @deny create: if false
+     * @deny update: if false
+     * @deny delete: if false
+     * @principle Allows public read access for game requests but protects against unauthorized modifications.
      */
     match /game_requests/{gameRequestId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows public reading of available games.
+     * @description Allows anyone to read available games, but restricts creation, update, and deletion.
      * @path /available_games/{availableGameId}
-     * @allow (get, list) Any user can read available games.
-     * @deny (create, update, delete) No one can create, update, or delete available games through the client.
-     * @principle Allows public reads and denies all writes.
+     * @allow get, list: if true
+     * @deny create: if false
+     * @deny update: if false
+     * @deny delete: if false
+     * @principle Allows public read access for available games but protects against unauthorized modifications.
      */
     match /available_games/{availableGameId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Enforces user-ownership for user accounts.
+     * @description Manages user accounts, allowing users to create their own account and read/write their own data.
      * @path /users/{userId}
-     * @allow (create) User can create their own account.
-     * @allow (get) User can read their own account.
-     * @allow (update) User can update their own account if it exists.
-     * @deny (create) User cannot create an account with a mismatched userId.
-     * @deny (get) User cannot read another user's account.
-     * @deny (update) User cannot update another user's account.
-     * @principle Enforces document ownership for reads and writes.
+     * @allow create: if request.auth.uid == userId
+     * @allow get: if isOwner(userId)
+     * @allow list: if false
+     * @allow update: if isExistingOwner(userId)
+     * @allow delete: if isExistingOwner(userId)
+     * @principle Enforces document ownership for user accounts, ensuring only the user can access their own data.
      */
     match /users/{userId} {
+      allow create: if isSignedIn() && request.auth.uid == userId;
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces user-ownership for user messages.
+     * @description Manages user messages, restricting access to the owner of the messages.
      * @path /users/{userId}/messages/{messageId}
-     * @allow (create) User can create messages under their own user ID.
-     * @allow (get) User can read their own messages.
-     * @allow (list) User can list their own messages.
-     * @allow (update, delete) User can update and delete their own messages.
-     * @deny (create) User cannot create messages under another user's ID.
-     * @deny (get) User cannot read messages under another user's ID.
-     * @deny (list) User cannot list messages under another user's ID.
-     * @principle Enforces document ownership for messages.
+     * @allow create: if isOwner(userId)
+     * @allow get: if isOwner(userId)
+     * @allow list: if isOwner(userId)
+     * @allow update: if isExistingOwner(userId)
+     * @allow delete: if isExistingOwner(userId)
+     * @principle Enforces document ownership for user messages, ensuring only the user can access their own messages.
      */
     match /users/{userId}/messages/{messageId} {
-      allow get, list: if isOwner(userId);
       allow create: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
      /**
-      * @description Disables all client-side access to the login_events collection.
+      * @description Restricts all access to login events.
       * @path /login_events/{loginEventId}
-      * @deny (get, list, create, update, delete) No client-side operations are allowed.
-      * @principle Restricts access to login event logs for backend/admin use only.
+      * @allow get: if false;
+      * @allow list: if false;
+      * @allow create: if false;
+      * @allow update: if false;
+      * @allow delete: if false;
+      * @principle Restricts access to login events.
       */
     match /login_events/{loginEventId} {
        allow get: if false;
@@ -106,7 +116,7 @@ service cloud.firestore {
        allow delete: if false;
     }
 
-    // --- Helper functions ---
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -116,7 +126,7 @@ service cloud.firestore {
     }
 
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+        return isSignedIn() && isOwner(userId) && resource != null;
     }
   }
 }
