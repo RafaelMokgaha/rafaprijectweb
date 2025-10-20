@@ -4,12 +4,16 @@
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { placeHolderImages } from '@/lib/placeholder-images';
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+  const backgroundImage = placeHolderImages.find(p => p.id === 'background');
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -25,7 +29,7 @@ export default function RootLayout({
             <div 
               className="absolute inset-0 bg-no-repeat bg-cover bg-center animate-ken-burns"
               style={{ 
-                backgroundImage: "url('https://picsum.photos/seed/background/1920/1080')",
+                backgroundImage: `url(${backgroundImage?.imageUrl})`,
                 zIndex: -2 
               }}
             />
