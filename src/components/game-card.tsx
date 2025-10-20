@@ -27,8 +27,8 @@ export function GameCard({ game, onRequestClick }: GameCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         {game.imageHint && (
-            <div className="absolute top-0 left-0 right-0 p-2 text-center bg-black/50">
-                <p className="text-xs text-white uppercase tracking-wider">{game.imageHint}</p>
+            <div className="absolute top-0 left-0 right-0 p-4 text-center bg-gradient-to-b from-black/60 to-transparent">
+                <p className="text-xs text-white uppercase tracking-wider font-bold text-shadow-glow">{game.imageHint}</p>
             </div>
         )}
       </div>
