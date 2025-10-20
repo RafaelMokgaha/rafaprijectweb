@@ -24,6 +24,7 @@ export function GameCard({ game, onRequestClick }: GameCardProps) {
           fill
           className="object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          data-ai-hint={game.imageHint}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         {game.imageHint && (
