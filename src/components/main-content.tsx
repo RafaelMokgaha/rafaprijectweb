@@ -18,8 +18,6 @@ import { Button } from './ui/button';
 import Link from 'next/link';
 import { collection, query, where } from 'firebase/firestore';
 
-const ADMIN_EMAIL = 'rafaproject06@gmail.com';
-
 interface Message {
   id: string;
   isRead: boolean;
@@ -33,7 +31,6 @@ export function MainContent() {
   const { user } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const unreadMessagesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -95,11 +92,6 @@ export function MainContent() {
                 </div>
               )}
             </div>
-            {isAdmin && (
-              <Button variant="outline" size="sm" asChild>
-                  <Link href="/admin/dashboard">Admin</Link>
-              </Button>
-            )}
             <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>
           </div>
         ) : (

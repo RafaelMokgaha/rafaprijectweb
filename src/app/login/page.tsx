@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -54,17 +55,8 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
       
-      if (firestore && userCredential.user) {
-        await addDoc(collection(firestore, 'login_events'), {
-            userId: userCredential.user.uid,
-            email: userCredential.user.email,
-            displayName: userCredential.user.displayName,
-            timestamp: serverTimestamp(),
-        });
-      }
-
       toast({
         title: 'Login Successful',
         description: 'Welcome back!',
