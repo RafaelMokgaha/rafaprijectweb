@@ -25,7 +25,7 @@ export default function RootLayout({
             <div 
               className="absolute inset-0 bg-no-repeat bg-cover bg-center animate-ken-burns"
               style={{ 
-                backgroundImage: "url('https://storage.googleapis.com/aif-starlark-scratch-space/2024-07-31/139f4255-b461-4870-a35b-16639c09931b.png')",
+                backgroundImage: "url('https://picsum.photos/seed/background/1920/1080')",
                 zIndex: -2 
               }}
             />
