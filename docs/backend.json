@@ -79,9 +79,9 @@
         "imageUrl"
       ]
     },
-    "UserAccount": {
+    "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserAccount",
+      "title": "User",
       "type": "object",
       "description": "Represents a user account on the platform.",
       "properties": {
@@ -107,7 +107,8 @@
       "required": [
         "id",
         "name",
-        "email"
+        "email",
+        "creationDate"
       ]
     },
     "UserMessage": {
@@ -149,6 +150,33 @@
         "messageText",
         "timestamp"
       ]
+    },
+    "LoginEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LoginEvent",
+      "type": "object",
+      "description": "Represents a single user login event.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who logged in."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email of the user."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the login event."
+        }
+      },
+      "required": ["userId", "email", "timestamp"]
     }
   },
   "auth": {
@@ -194,9 +222,9 @@
       {
         "path": "/users/{userId}",
         "definition": {
-          "entityName": "UserAccount",
+          "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/UserAccount"
+            "$ref": "#/backend/entities/User"
           },
           "description": "Stores user account information.  Path-based ownership for user data.",
           "params": [
@@ -223,6 +251,22 @@
             {
               "name": "messageId",
               "description": "The unique identifier for the user message."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/login_events/{loginEventId}",
+        "definition": {
+          "entityName": "LoginEvent",
+          "schema": {
+            "$ref": "#/backend/entities/LoginEvent"
+          },
+          "description": "Stores a log of user login events for admin monitoring.",
+          "params": [
+             {
+              "name": "loginEventId",
+              "description": "The unique identifier for the login event."
             }
           ]
         }

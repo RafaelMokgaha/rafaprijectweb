@@ -97,7 +97,7 @@ export function MainContent() {
             </div>
             {isAdmin && (
               <Button variant="outline" size="sm" asChild>
-                  <Link href="/admin">Admin</Link>
+                  <Link href="/admin/dashboard">Admin</Link>
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>

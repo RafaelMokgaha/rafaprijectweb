@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -24,9 +24,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
 import { placeHolderImages } from '@/lib/placeholder-images';
+import { collection, serverTimestamp, addDoc, doc, setDoc } from 'firebase/firestore';
 
 export default function LoginPage() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
@@ -52,7 +54,17 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      
+      if (firestore && userCredential.user) {
+        await addDoc(collection(firestore, 'login_events'), {
+            userId: userCredential.user.uid,
+            email: userCredential.user.email,
+            displayName: userCredential.user.displayName,
+            timestamp: serverTimestamp(),
+        });
+      }
+
       toast({
         title: 'Login Successful',
         description: 'Welcome back!',
@@ -77,6 +89,17 @@ export default function LoginPage() {
       await updateProfile(userCredential.user, {
         displayName: signupName,
       });
+
+      if (firestore) {
+        const userRef = doc(firestore, 'users', userCredential.user.uid);
+        await setDoc(userRef, {
+            id: userCredential.user.uid,
+            name: signupName,
+            email: signupEmail,
+            creationDate: serverTimestamp(),
+        });
+      }
+
       toast({
         title: 'Sign Up Successful',
         description: 'Your account has been created.',
