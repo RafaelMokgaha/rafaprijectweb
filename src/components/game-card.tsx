@@ -6,6 +6,7 @@ interface Game {
   id: string;
   name: string;
   imageUrl: string;
+  imageHint?: string;
 }
 
 interface GameCardProps {
@@ -25,6 +26,11 @@ export function GameCard({ game, onRequestClick }: GameCardProps) {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {game.imageHint && (
+            <div className="absolute top-0 left-0 right-0 p-2 text-center bg-black/50">
+                <p className="text-xs text-white uppercase tracking-wider">{game.imageHint}</p>
+            </div>
+        )}
       </div>
       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
         <h3 className="font-headline text-xl font-bold truncate">{game.name}</h3>

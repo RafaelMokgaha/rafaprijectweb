@@ -38,7 +38,8 @@ export function AvailableGames({ onRequestClick }: AvailableGamesProps) {
                         const gameData = {
                             id: game.imageId,
                             name: game.title,
-                            imageUrl: image?.imageUrl || 'https://placehold.co/600x800'
+                            imageUrl: image?.imageUrl || 'https://placehold.co/600x800',
+                            imageHint: image?.imageHint
                         }
                         return (
                             <GameCard 
