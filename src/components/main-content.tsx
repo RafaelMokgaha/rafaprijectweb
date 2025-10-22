@@ -22,6 +22,8 @@ interface Message {
   isRead: boolean;
 }
 
+const ADMIN_EMAIL = 'rafaproject06@gmail.com';
+
 export function MainContent() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState('');
@@ -81,9 +83,11 @@ export function MainContent() {
         {user ? (
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-primary-foreground">Welcome, {user.displayName || user.email}</span>
-            <Button variant="outline" size="sm" asChild>
-                <Link href="/admin">Admin</Link>
-            </Button>
+            {user.email === ADMIN_EMAIL && (
+              <Button variant="outline" size="sm" asChild>
+                  <Link href="/admin">Admin</Link>
+              </Button>
+            )}
             <div className="relative">
                <Button variant="outline" size="sm" asChild>
                   <Link href="/inbox">Inbox</Link>
