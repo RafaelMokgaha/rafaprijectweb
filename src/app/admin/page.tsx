@@ -20,6 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 interface GameRequest {
   id: string;
@@ -32,11 +34,13 @@ interface GameRequest {
   notes?: string;
 }
 
+const ADMIN_EMAIL = 'rafaproject06@gmail.com';
+
 function AdminPanel() {
   const firestore = useFirestore();
-  const { user } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
+  const { user } = useUser();
 
   const requestsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -133,12 +137,40 @@ function AdminPanel() {
 }
 
 
+function AccessDenied() {
+    const router = useRouter();
+    return (
+        <div className="flex flex-col items-center justify-center h-screen">
+            <SectionWrapper className='text-center'>
+                <SectionTitle>Access Denied</SectionTitle>
+                <p className="text-muted-foreground mb-8">You do not have permission to view this page.</p>
+                <Button onClick={() => router.push('/')}>Go to Homepage</Button>
+            </SectionWrapper>
+        </div>
+    )
+}
+
+function AdminGate({ children }: { children: React.ReactNode }) {
+    const { user, isUserLoading } = useUser();
+    
+    if (isUserLoading) {
+        return <div className="flex items-center justify-center h-screen text-2xl">Loading...</div>;
+    }
+    
+    if (user?.email !== ADMIN_EMAIL) {
+        return <AccessDenied />;
+    }
+    
+    return <>{children}</>;
+}
+
+
 export default function AdminPage() {
-    // Note: This page should be protected so only admins can view it.
-    // Future work can involve adding user roles and claims to secure this route.
     return (
         <AuthGate>
-            <AdminPanel />
+            <AdminGate>
+                <AdminPanel />
+            </AdminGate>
         </AuthGate>
     )
 }
