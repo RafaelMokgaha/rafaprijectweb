@@ -14,10 +14,11 @@ export function Header({ children }: { children?: React.ReactNode }) {
                     <Image
                         src={logoImage.imageUrl}
                         alt={logoImage.description}
-                        width={150}
-                        height={75}
-                        className="object-contain"
+                        width={200}
+                        height={40}
+                        className="object-contain h-10 w-auto"
                         data-ai-hint={logoImage.imageHint}
+                        priority
                     />
                 </Link>
             )}

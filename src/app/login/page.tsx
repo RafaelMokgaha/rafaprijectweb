@@ -126,10 +126,11 @@ export default function LoginPage() {
                 <Image 
                     src={logoImage.imageUrl} 
                     alt={logoImage.description} 
-                    width={200} 
-                    height={100}
+                    width={300} 
+                    height={60}
                     className="object-contain"
                     data-ai-hint={logoImage.imageHint}
+                    priority
                 />
             </div>
          )}
