@@ -178,6 +178,14 @@ export default function LoginPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="rounded-lg border-dashed border-primary/50 border p-3 text-sm">
+                        <h4 className="font-bold mb-2 text-primary-foreground">Test Credentials</h4>
+                        <p className="text-muted-foreground">Use the following credentials to create a test account:</p>
+                        <ul className="mt-2 space-y-1">
+                            <li><span className="font-semibold text-primary-foreground/80">Email:</span> <code className="bg-muted text-muted-foreground px-1 py-0.5 rounded">test@example.com</code></li>
+                            <li><span className="font-semibold text-primary-foreground/80">Password:</span> <code className="bg-muted text-muted-foreground px-1 py-0.5 rounded">password123</code></li>
+                        </ul>
+                    </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Name</Label>
                     <Input
