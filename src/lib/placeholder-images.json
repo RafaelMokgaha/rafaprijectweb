@@ -3,14 +3,14 @@
     {
       "id": "logo",
       "description": "TYLOCK GAMES Logo",
-      "imageUrl": "https://static.wixstatic.com/media/a827d0_3c89fa9c60254e37b812bb5ad4b05f7a~mv2.png",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_3c89fa9c60254e37b912bb5ad4b05f7a~mv2.png",
       "imageHint": "futuristic logo"
     },
     {
       "id": "background",
-      "description": "Tylock Games Background",
-      "imageUrl": "https://storage.googleapis.com/aif-starlark-dev-public/studio_project_ask-the-expert/seed_images/tylock_games_logo_1.jpeg",
-      "imageHint": "gaming logo"
+      "description": "TYLOCK GAMES Background Image",
+      "imageUrl": "https://static.wixstatic.com/media/a827d0_2f53b41c33354821ba5b41ff3ef64c89~mv2.png",
+      "imageHint": "gaming environment"
     },
     {
       "id": "gta_v_enhanced",
