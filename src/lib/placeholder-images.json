@@ -1,12 +1,6 @@
 {
   "placeholderImages": [
     {
-      "id": "logo",
-      "description": "TYLOCK GAMES Logo",
-      "imageUrl": "https://static.wixstatic.com/media/a827d0_3c89fa9c60254e37b912bb5ad4b05f7a~mv2.png",
-      "imageHint": "futuristic logo"
-    },
-    {
       "id": "background",
       "description": "TYLOCK GAMES Background Image",
       "imageUrl": "https://static.wixstatic.com/media/a827d0_2f53b41c33354821ba5b41ff3ef64c89~mv2.png",

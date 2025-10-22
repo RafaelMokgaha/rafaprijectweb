@@ -41,8 +41,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { user } = useUser();
 
-  const logoImage = placeHolderImages.find(p => p.id === 'logo');
-  
   useEffect(() => {
     // If the user is logged in, redirect them to the home page.
     if (user) {
@@ -121,19 +119,9 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
        <div className="w-full max-w-md mx-auto">
-         {logoImage && (
-            <div className="flex justify-center mb-8">
-                <Image 
-                    src={logoImage.imageUrl} 
-                    alt={logoImage.description} 
-                    width={300} 
-                    height={60}
-                    className="object-contain"
-                    data-ai-hint={logoImage.imageHint}
-                    priority
-                />
-            </div>
-         )}
+        <div className="flex justify-center mb-8">
+            <h1 className="text-4xl font-headline font-bold text-shadow-glow">TYLOCK GAMES</h1>
+        </div>
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
