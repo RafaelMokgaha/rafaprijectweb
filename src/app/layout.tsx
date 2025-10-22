@@ -27,9 +27,10 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <div className="relative min-h-screen w-full">
             <div 
-              className="absolute inset-0 bg-no-repeat bg-contain bg-center"
+              className="absolute inset-0 bg-no-repeat bg-center"
               style={{ 
                 backgroundImage: `url(${backgroundImage?.imageUrl})`,
+                backgroundSize: 'cover',
                 zIndex: -2 
               }}
               data-ai-hint={backgroundImage?.imageHint}
