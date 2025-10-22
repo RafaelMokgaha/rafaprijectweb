@@ -27,7 +27,7 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <div className="relative min-h-screen w-full">
             <div 
-              className="absolute inset-0 bg-no-repeat bg-cover bg-center animate-ken-burns"
+              className="absolute inset-0 bg-no-repeat bg-cover bg-center"
               style={{ 
                 backgroundImage: `url(${backgroundImage?.imageUrl})`,
                 zIndex: -2 
