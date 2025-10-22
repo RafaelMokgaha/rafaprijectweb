@@ -6,7 +6,6 @@ import { Header } from '@/components/header';
 import { HeroSection } from '@/components/hero-section';
 import { AnnouncementSection } from '@/components/announcement-section';
 import { AvailableGames } from '@/components/available-games';
-import { TutorialSection } from '@/components/tutorial-section';
 import { InstructionsSection } from '@/components/instructions-section';
 import { DiscordSection } from '@/components/discord-section';
 import { Footer } from '@/components/footer';
@@ -108,7 +107,6 @@ export function MainContent() {
              <AvailableGames onRequestClick={openRequestFlow} />
           </div>
           <InstructionsSection />
-          <TutorialSection />
           <DiscordSection />
         </main>
         <Footer />
