@@ -30,7 +30,7 @@ export default function RootLayout({
               className="absolute inset-0 bg-no-repeat bg-center"
               style={{ 
                 backgroundImage: `url(${backgroundImage?.imageUrl})`,
-                backgroundSize: 'cover',
+                backgroundSize: '100% 100%',
                 zIndex: -2 
               }}
               data-ai-hint={backgroundImage?.imageHint}
