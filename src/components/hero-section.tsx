@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 
 interface HeroSectionProps {
@@ -9,7 +10,7 @@ export function HeroSection({ onRequestClick, onAvailableClick }: HeroSectionPro
   return (
     <section className="text-center py-20 md:py-32">
       <h1 className="font-headline text-5xl md:text-7xl font-bold uppercase text-shadow-glow">
-        Welcome to RAFA Project
+        Welcome to TYLOCK GAMES
       </h1>
       <p className="mt-4 text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto">
         WHICH GAME DO U WANT OR NEED

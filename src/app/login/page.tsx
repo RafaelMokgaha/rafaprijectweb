@@ -144,7 +144,7 @@ export default function LoginPage() {
                 <CardHeader>
                   <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
                   <CardDescription>
-                    Sign in to access the RAFA Project Launcher.
+                    Sign in to access the TYLOCK GAMES Launcher.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

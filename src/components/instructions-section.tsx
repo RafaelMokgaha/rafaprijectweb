@@ -49,7 +49,7 @@ export function InstructionsSection() {
             <div>
               <h4 className="font-bold text-xl text-primary-foreground">Receive the Game</h4>
               <p className="text-primary-foreground/80 mt-1">
-                After your request is confirmed, you’ll receive the game directly through Discord from the admin. Please make sure to check your tickets on the official RAFA Project Discord server.
+                After your request is confirmed, you’ll receive the game directly through Discord from the admin. Please make sure to check your tickets on the official TYLOCK GAMES Discord server.
               </p>
             </div>
           </div>

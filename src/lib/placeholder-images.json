@@ -2,13 +2,13 @@
   "placeholderImages": [
     {
       "id": "logo",
-      "description": "RAFA Project Logo",
+      "description": "TYLOCK GAMES Logo",
       "imageUrl": "https://static.wixstatic.com/media/a827d0_3c89fa9c60254e37b812bb5ad4b05f7a~mv2.png",
       "imageHint": "futuristic logo"
     },
     {
       "id": "background",
-      "description": "Tylock Games Logo",
+      "description": "Tylock Games Background",
       "imageUrl": "https://storage.googleapis.com/aif-starlark-dev-public/studio_project_ask-the-expert/seed_images/tylock_games_logo_1.jpeg",
       "imageHint": "gaming logo"
     },
