@@ -32,6 +32,7 @@ export default function RootLayout({
                 backgroundImage: `url(${backgroundImage?.imageUrl})`,
                 zIndex: -2 
               }}
+              data-ai-hint={backgroundImage?.imageHint}
             />
             <div 
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
