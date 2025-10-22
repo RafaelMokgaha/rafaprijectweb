@@ -8,9 +8,9 @@
     },
     {
       "id": "background",
-      "description": "RAFA Project gaming background",
-      "imageUrl": "https://static.wixstatic.com/media/a827d0_72c3623181a94851b929a165a68be309~mv2.png",
-      "imageHint": "gaming montage"
+      "description": "Tylock Games Logo",
+      "imageUrl": "https://storage.googleapis.com/aif-starlark-dev-public/studio_project_ask-the-expert/seed_images/tylock_games_logo_1.jpeg",
+      "imageHint": "gaming logo"
     },
     {
       "id": "gta_v_enhanced",
